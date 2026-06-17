@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode, CSSProperties } from "react";
 import {
   ChevronLIcon,
@@ -558,6 +559,13 @@ function TabDocumentos({
   const { data: docs = [], isLoading } = useDocumentos(causaId);
   const [viewer, setViewer] = useState<{ name: string; url: string | null; downloadUrl: string } | null>(null);
 
+  const DOCS_PER_PAGE = 8;
+  const [docPage, setDocPage] = useState(1);
+  useEffect(() => setDocPage(1), [causaId]);
+  const totalDocPages = Math.max(1, Math.ceil(docs.length / DOCS_PER_PAGE));
+  const page = Math.min(docPage, totalDocPages);
+  const pageDocs = docs.slice((page - 1) * DOCS_PER_PAGE, page * DOCS_PER_PAGE);
+
   const handleView = async (d: (typeof docs)[number]) => {
     const name = docLabel(d);
     setViewer({ name, url: null, downloadUrl: d.downloadUrl! });
@@ -618,7 +626,7 @@ function TabDocumentos({
       )}
 
       {!isLoading &&
-        docs.map((d, i) => {
+        pageDocs.map((d, i) => {
           const kind = fileKind(d.nombre);
           const isPdf = kind === "pdf";
           const viewable = d.available && Boolean(d.downloadUrl);
@@ -632,7 +640,7 @@ function TabDocumentos({
                 gridTemplateColumns: "auto 1fr auto auto auto",
                 gap: 14,
                 alignItems: "center",
-                borderBottom: i === docs.length - 1 ? "none" : "1px solid var(--fj-line)",
+                borderBottom: i === pageDocs.length - 1 ? "none" : "1px solid var(--fj-line)",
               }}
             >
               <DocThumb kind={kind} />
@@ -693,6 +701,46 @@ function TabDocumentos({
             </div>
           );
         })}
+
+      {!isLoading && docs.length > DOCS_PER_PAGE && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 20px",
+            borderTop: "1px solid var(--fj-line)",
+            fontFamily: "var(--fj-body)",
+            fontSize: 12.5,
+            color: "var(--fj-ink3)",
+          }}
+        >
+          <span>
+            {(page - 1) * DOCS_PER_PAGE + 1}–{Math.min(page * DOCS_PER_PAGE, docs.length)} de {docs.length}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              style={{ ...iconBtnCss, opacity: page <= 1 ? 0.35 : 1, cursor: page <= 1 ? "not-allowed" : "pointer" }}
+              disabled={page <= 1}
+              onClick={() => setDocPage((p) => Math.max(1, p - 1))}
+              title="Anterior"
+            >
+              <ChevronLeft size={16} strokeWidth={1.8} />
+            </button>
+            <span style={{ minWidth: 64, textAlign: "center" }}>
+              {page} / {totalDocPages}
+            </span>
+            <button
+              style={{ ...iconBtnCss, opacity: page >= totalDocPages ? 0.35 : 1, cursor: page >= totalDocPages ? "not-allowed" : "pointer" }}
+              disabled={page >= totalDocPages}
+              onClick={() => setDocPage((p) => Math.min(totalDocPages, p + 1))}
+              title="Siguiente"
+            >
+              <ChevronRight size={16} strokeWidth={1.8} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {viewer && (
         <PdfViewerModal
