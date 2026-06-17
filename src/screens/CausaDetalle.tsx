@@ -28,6 +28,9 @@ import { useDocumentos } from "@/hooks/useDocumentos";
 import { Splash } from "@/components/Splash";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { fetchBlob } from "@/lib/api";
+import pdfIcon from "@/assets/file-icons/pdf.png";
+import wordIcon from "@/assets/file-icons/word.jpg";
+import imageIcon from "@/assets/file-icons/image.png";
 import { PLAZOS, ABOGADOS } from "@/data/mock";
 import { fmtCLP, fmtDate } from "@/lib/format";
 import type { Causa, Plazo } from "@/data/types";
@@ -467,54 +470,31 @@ const iconBtnCss: CSSProperties = {
   justifyContent: "center",
 };
 
-/* Red "PDF" thumbnail for PDFs, generic doc tile otherwise. */
-function DocThumb({ isPdf }: { isPdf: boolean }) {
-  if (isPdf) {
-    return (
-      <div
-        style={{
-          width: 36,
-          height: 44,
-          background: "var(--fj-rojo-soft)",
-          border: "1px solid var(--fj-rojo)",
-          borderRadius: 4,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flex: "0 0 auto",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--fj-body)",
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: ".06em",
-            color: "var(--fj-rojo)",
-          }}
-        >
-          PDF
-        </span>
-      </div>
-    );
-  }
+type FileKind = "pdf" | "word" | "image" | "other";
+
+const FILE_ICON: Record<FileKind, string> = {
+  pdf: pdfIcon,
+  word: wordIcon,
+  image: imageIcon,
+  other: pdfIcon, // PJUD documents are PDFs by default
+};
+
+function fileKind(nombre: string): FileKind {
+  const ext = nombre.toLowerCase().match(/\.([a-z0-9]{2,4})$/)?.[1];
+  if (!ext || ext === "pdf") return "pdf";
+  if (ext === "doc" || ext === "docx" || ext === "rtf") return "word";
+  if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "tif", "tiff"].includes(ext)) return "image";
+  return "other";
+}
+
+/* File-type thumbnail using the provided PDF / Word / image icons. */
+function DocThumb({ kind }: { kind: FileKind }) {
   return (
-    <div
-      style={{
-        width: 36,
-        height: 44,
-        background: "var(--fj-panel2)",
-        border: "1px solid var(--fj-line-strong)",
-        borderRadius: 4,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "var(--fj-ink3)",
-        flex: "0 0 auto",
-      }}
-    >
-      <DocIcon size={16} strokeWidth={1.6} />
-    </div>
+    <img
+      src={FILE_ICON[kind]}
+      alt={kind}
+      style={{ width: 34, height: 40, objectFit: "contain", flex: "0 0 auto" }}
+    />
   );
 }
 
@@ -567,11 +547,6 @@ function docLabel(d: { nombre: string; docType?: string }): string {
     : "Documento";
 }
 
-// PJUD documents are PDFs; only treat as non-PDF if the filename says otherwise.
-function isPdfDoc(d: { nombre: string }): boolean {
-  const m = d.nombre.toLowerCase().match(/\.([a-z0-9]{2,4})$/);
-  return !m || m[1] === "pdf";
-}
 
 function TabDocumentos({
   causaId,
@@ -644,7 +619,8 @@ function TabDocumentos({
 
       {!isLoading &&
         docs.map((d, i) => {
-          const isPdf = isPdfDoc(d);
+          const kind = fileKind(d.nombre);
+          const isPdf = kind === "pdf";
           const viewable = d.available && Boolean(d.downloadUrl);
           const title = docLabel(d);
           return (
@@ -659,7 +635,7 @@ function TabDocumentos({
                 borderBottom: i === docs.length - 1 ? "none" : "1px solid var(--fj-line)",
               }}
             >
-              <DocThumb isPdf={isPdf} />
+              <DocThumb kind={kind} />
               <div style={{ minWidth: 0 }}>
                 <div
                   style={{
