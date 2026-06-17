@@ -50,7 +50,12 @@ function PlazosRoute() {
 }
 
 export default function App() {
-  const [authed, setAuthed] = useState(false);
+  // Persist the (mock) auth flag so direct links and refreshes keep the session.
+  const [authed, setAuthed] = useState(() => localStorage.getItem("sd_authed") === "1");
+  const login = () => {
+    localStorage.setItem("sd_authed", "1");
+    setAuthed(true);
+  };
 
   return (
     <BrowserRouter>
@@ -58,7 +63,7 @@ export default function App() {
       <Routes>
         <Route
           path="/login"
-          element={authed ? <Navigate to="/" replace /> : <LoginScreen onLogin={() => setAuthed(true)} />}
+          element={authed ? <Navigate to="/" replace /> : <LoginScreen onLogin={login} />}
         />
         <Route path="/showcase" element={<Showcase />} />
 
