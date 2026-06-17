@@ -1,0 +1,223 @@
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Colors — map fj tokens to Tailwind utilities */
+  --color-primary: var(--fj-primary);
+  --color-primary-soft: var(--fj-primary-soft);
+  --color-primary-ink: var(--fj-primary-ink);
+  --color-accent: var(--fj-accent);
+  --color-ink: var(--fj-ink);
+  --color-ink2: var(--fj-ink2);
+  --color-ink3: var(--fj-ink3);
+  --color-paper: var(--fj-paper);
+  --color-panel: var(--fj-panel);
+  --color-panel2: var(--fj-panel2);
+  --color-line: var(--fj-line);
+  --color-line-strong: var(--fj-line-strong);
+  --color-verde: var(--fj-verde);
+  --color-verde-soft: var(--fj-verde-soft);
+  --color-amarillo: var(--fj-amarillo);
+  --color-amarillo-soft: var(--fj-amarillo-soft);
+  --color-rojo: var(--fj-rojo);
+  --color-rojo-soft: var(--fj-rojo-soft);
+
+  /* Fonts */
+  --font-heading: var(--fj-heading);
+  --font-body: var(--fj-body);
+  --font-mono: var(--fj-mono);
+
+  /* Radii */
+  --radius-card: 12px;
+  --radius-modal: 14px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 0 rgba(255,255,255,.7) inset, 0 4px 14px rgba(15,22,38,.06);
+  --shadow-modal: 0 16px 60px rgba(15,22,38,.22);
+  --shadow-dropdown: 0 10px 30px rgba(15,22,38,.14);
+  --shadow-drawer: -10px 0 30px rgba(15,22,38,.10);
+}
+
+/* ─── Default palette (segal) ─── */
+:root {
+  --fj-primary:       #1e4dbb;
+  --fj-primary-soft:  #e4ecf9;
+  --fj-primary-ink:   #ffffff;
+  --fj-accent:        #0a0a0a;
+  --fj-ink:           #0a0e1a;
+  --fj-ink2:          #2f3848;
+  --fj-ink3:          #6b7686;
+  --fj-paper:         #f5f6f8;
+  --fj-panel:         #ffffff;
+  --fj-panel2:        #eef0f5;
+  --fj-line:          #e1e4eb;
+  --fj-line-strong:   #c8ccd6;
+  --fj-verde:         #3a8a5e;
+  --fj-verde-soft:    #dff0e6;
+  --fj-amarillo:      #b08214;
+  --fj-amarillo-soft: #f5e9c8;
+  --fj-rojo:          #c0392b;
+  --fj-rojo-soft:     #f5dcd8;
+
+  /* Default font set (classic) */
+  --fj-heading: "Source Serif 4", "Spectral", Georgia, serif;
+  --fj-body:    "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --fj-mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ─── Palettes (attribute selector = same specificity as .dark) ─── */
+[data-palette="segal"] {
+  --fj-primary:       #1e4dbb;
+  --fj-primary-soft:  #e4ecf9;
+  --fj-primary-ink:   #ffffff;
+  --fj-accent:        #0a0a0a;
+  --fj-ink:           #0a0e1a;
+  --fj-ink2:          #2f3848;
+  --fj-ink3:          #6b7686;
+  --fj-paper:         #f5f6f8;
+  --fj-panel:         #ffffff;
+  --fj-panel2:        #eef0f5;
+  --fj-line:          #e1e4eb;
+  --fj-line-strong:   #c8ccd6;
+  --fj-verde:         #3a8a5e;
+  --fj-verde-soft:    #dff0e6;
+  --fj-amarillo:      #b08214;
+  --fj-amarillo-soft: #f5e9c8;
+  --fj-rojo:          #c0392b;
+  --fj-rojo-soft:     #f5dcd8;
+}
+
+[data-palette="tribunal"] {
+  --fj-primary:       #1f3a5f;
+  --fj-primary-soft:  #e6ecf3;
+  --fj-primary-ink:   #ffffff;
+  --fj-accent:        #8a5a3b;
+  --fj-ink:           #15202b;
+  --fj-ink2:          #3a4654;
+  --fj-ink3:          #6b7682;
+  --fj-paper:         #f6f4ef;
+  --fj-panel:         #fdfcf9;
+  --fj-panel2:        #f1ede4;
+  --fj-line:          #e3ddd0;
+  --fj-line-strong:   #cfc7b5;
+  --fj-verde:         #3f7d5b;
+  --fj-verde-soft:    #e3efe7;
+  --fj-amarillo:      #b6862c;
+  --fj-amarillo-soft: #f6ecd2;
+  --fj-rojo:          #a83a3a;
+  --fj-rojo-soft:     #f2dcdc;
+}
+
+[data-palette="toga"] {
+  --fj-primary:       #6b1f2d;
+  --fj-primary-soft:  #f1e2e4;
+  --fj-primary-ink:   #ffffff;
+  --fj-accent:        #9b7a3a;
+  --fj-ink:           #2b1f1f;
+  --fj-ink2:          #4a3a3a;
+  --fj-ink3:          #7a6a6a;
+  --fj-paper:         #f8f3ec;
+  --fj-panel:         #fdfaf5;
+  --fj-panel2:        #f0e8dd;
+  --fj-line:          #e3d7c8;
+  --fj-line-strong:   #cdbda9;
+  --fj-verde:         #5a7847;
+  --fj-verde-soft:    #e7eedd;
+  --fj-amarillo:      #a86f23;
+  --fj-amarillo-soft: #f3e3cb;
+  --fj-rojo:          #9a2a2a;
+  --fj-rojo-soft:     #f0d6d6;
+}
+
+[data-palette="notario"] {
+  --fj-primary:       #1f4a3d;
+  --fj-primary-soft:  #dde9e3;
+  --fj-primary-ink:   #ffffff;
+  --fj-accent:        #8a6a3b;
+  --fj-ink:           #14201b;
+  --fj-ink2:          #37463f;
+  --fj-ink3:          #6b766f;
+  --fj-paper:         #f4f2ea;
+  --fj-panel:         #fbfaf3;
+  --fj-panel2:        #ebe7d9;
+  --fj-line:          #dfd9c7;
+  --fj-line-strong:   #c8c0a8;
+  --fj-verde:         #3b7553;
+  --fj-verde-soft:    #dde9df;
+  --fj-amarillo:      #b07e29;
+  --fj-amarillo-soft: #f3e6c8;
+  --fj-rojo:          #a23838;
+  --fj-rojo-soft:     #efd6d6;
+}
+
+[data-palette="codex"] {
+  --fj-primary:       #2a3f6b;
+  --fj-primary-soft:  #e1e5ee;
+  --fj-primary-ink:   #ffffff;
+  --fj-accent:        #6a5a3a;
+  --fj-ink:           #0f1726;
+  --fj-ink2:          #33405a;
+  --fj-ink3:          #6a7488;
+  --fj-paper:         #f3f3f0;
+  --fj-panel:         #fafaf6;
+  --fj-panel2:        #eaeae3;
+  --fj-line:          #dedccf;
+  --fj-line-strong:   #c6c4b4;
+  --fj-verde:         #3d735a;
+  --fj-verde-soft:    #dfeae3;
+  --fj-amarillo:      #a87c28;
+  --fj-amarillo-soft: #f0e3c7;
+  --fj-rojo:          #9c3838;
+  --fj-rojo-soft:     #ecd6d6;
+}
+
+/* ─── Dark overlay (placed AFTER palettes — wins equal specificity) ─── */
+/* Does NOT reset primary/accent — they come from the active palette */
+.dark {
+  --fj-primary-soft:  #1c2433;
+  --fj-primary-ink:   #f5f3ee;
+  --fj-ink:           #f1ede4;
+  --fj-ink2:          #c5bfb0;
+  --fj-ink3:          #8c8676;
+  --fj-paper:         #0f1219;
+  --fj-panel:         #171b24;
+  --fj-panel2:        #1f2430;
+  --fj-line:          #252c3a;
+  --fj-line-strong:   #2f3848;
+  --fj-verde:         #6fb487;
+  --fj-verde-soft:    #1a2a23;
+  --fj-amarillo:      #dab061;
+  --fj-amarillo-soft: #2a2316;
+  --fj-rojo:          #d36b6b;
+  --fj-rojo-soft:     #2a1818;
+}
+
+/* ─── Font sets ─── */
+[data-font="classic"] {
+  --fj-heading: "Source Serif 4", "Spectral", Georgia, serif;
+  --fj-body:    "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --fj-mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+
+[data-font="contemporary"] {
+  --fj-heading: "Newsreader", "Source Serif 4", Georgia, serif;
+  --fj-body:    "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --fj-mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+
+[data-font="grotesk"] {
+  --fj-heading: "Instrument Serif", "Source Serif 4", Georgia, serif;
+  --fj-body:    "Geist", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --fj-mono:    "Geist Mono", ui-monospace, monospace;
+}
+
+/* ─── Base layer ─── */
+@layer base {
+  body {
+    background: var(--fj-paper);
+    color: var(--fj-ink);
+    font-family: var(--fj-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
