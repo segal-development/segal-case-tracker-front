@@ -26,6 +26,7 @@ import { Pill } from "@/components/primitives/Pill";
 import { useCausa } from "@/hooks/useCausa";
 import { useActuaciones } from "@/hooks/useActuaciones";
 import { useDocumentos } from "@/hooks/useDocumentos";
+import { usePartes } from "@/hooks/usePartes";
 import { Splash } from "@/components/Splash";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { fetchBlob } from "@/lib/api";
@@ -845,18 +846,48 @@ function TabTimeline({ causaId }: { causaId: string }) {
 /* ── Tab bar ── */
 type TabId = "info" | "plazos" | "documentos" | "timeline";
 
+/* ── Firm lawyer resolution from the case litigantes ── */
+const FIRM_RUT = (import.meta.env.VITE_FIRM_RUT as string | undefined) ?? "";
+const _normRut = (r: string) => (r ?? "").replace(/[.\-\s]/g, "").toLowerCase();
+const _cleanName = (n: string) => n.replace(/\s*\(.*\)\s*$/, "").trim();
+const _initials = (n: string) => {
+  const parts = n.split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "SD";
+};
+
+function resolveFirmLawyer(
+  partes: { participante: string; rut: string; nombre: string }[],
+  fallback: { nombre: string; iniciales: string; color: string },
+): { nombre: string; iniciales: string; color: string; side: string | null } {
+  const match = FIRM_RUT
+    ? partes.find((p) => _normRut(p.rut) === _normRut(FIRM_RUT))
+    : undefined;
+  if (!match) return { ...fallback, side: null };
+  const nombre = _cleanName(match.nombre);
+  const side = match.participante.includes("DTE")
+    ? "Demandante"
+    : match.participante.includes("DDO")
+      ? "Demandado"
+      : null;
+  return { nombre, iniciales: _initials(nombre), color: fallback.color, side };
+}
+
 /* ── Main export ── */
 export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => void }) {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("info");
   const { data: causa } = useCausa(id);
-  // Hooks must run unconditionally — keep this ABOVE the early return below.
+  // Hooks must run unconditionally — keep these ABOVE the early return below.
   const { data: docsList = [] } = useDocumentos(id);
+  const { data: partes = [] } = usePartes(id);
 
   if (!causa) {
     return <Splash inline label="Cargando causa" />;
   }
+
+  // Real firm lawyer = the litigante whose RUT matches the firm account.
+  const firmLawyer = resolveFirmLawyer(partes, causa.abogado);
 
   const causaPlazos = PLAZOS.filter((p) => p.causaId === causa.id);
 
@@ -979,12 +1010,26 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
                 value={
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                     <Avatar
-                      iniciales={causa.abogado.iniciales}
-                      color={causa.abogado.color}
-                      nombre={causa.abogado.nombre}
+                      iniciales={firmLawyer.iniciales}
+                      color={firmLawyer.color}
+                      nombre={firmLawyer.nombre}
                       size={20}
                     />
-                    {causa.abogado.nombre}
+                    {firmLawyer.nombre}
+                    {firmLawyer.side && (
+                      <span
+                        style={{
+                          fontFamily: "var(--fj-body)",
+                          fontSize: 10.5,
+                          color: "var(--fj-ink3)",
+                          border: "1px solid var(--fj-line)",
+                          borderRadius: 999,
+                          padding: "1px 7px",
+                        }}
+                      >
+                        {firmLawyer.side}
+                      </span>
+                    )}
                   </span>
                 }
               />
