@@ -15,3 +15,17 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText} — ${path}`);
   return res.json() as Promise<T>;
 }
+
+/**
+ * Fetch a protected binary resource (e.g. a PDF) WITH the auth header and return
+ * a blob. `absolutePath` is a full API path (e.g. /api/v1/documents/123/download)
+ * — it already includes the /api/v1 prefix, so it is fetched as-is via the proxy.
+ */
+export async function fetchBlob(absolutePath: string): Promise<Blob> {
+  if (!TOKEN) throw new Error('VITE_API_TOKEN is not set');
+  const res = await fetch(absolutePath, {
+    headers: { Authorization: `Bearer ${TOKEN}` },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.blob();
+}

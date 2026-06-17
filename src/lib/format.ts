@@ -3,13 +3,24 @@ export function fmtCLP(v: number | null): string {
   return "$" + v.toLocaleString("es-CL");
 }
 
+// Accepts a date-only string ("2025-03-12") OR a full ISO datetime
+// ("2026-04-15T00:00:00") — the API returns the latter. Normalize to the date
+// part + noon to avoid timezone shifts.
+function _atNoon(d: string): Date | null {
+  if (!d) return null;
+  const date = new Date(d.split("T")[0] + "T12:00:00");
+  return isNaN(date.getTime()) ? null : date;
+}
+
 export function fmtDate(d: string): string {
-  const date = new Date(d + "T12:00:00"); // noon to avoid timezone shifts
+  const date = _atNoon(d);
+  if (!date) return "—";
   return date.toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" }).replace(".", "");
 }
 
 export function fmtShortDate(d: string): string {
-  const date = new Date(d + "T12:00:00");
+  const date = _atNoon(d);
+  if (!date) return "—";
   return date.toLocaleDateString("es-CL", { day: "2-digit", month: "short" }).replace(".", "");
 }
 

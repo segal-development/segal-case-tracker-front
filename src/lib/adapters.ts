@@ -120,6 +120,9 @@ export function docToDocumento(d: DocumentResponse): Documento {
     peso: '—',
     fecha: '—',
     autor: '—',
+    docType: d.doc_type,
+    available: d.available,
+    downloadUrl: d.download_url,
   };
 }
 

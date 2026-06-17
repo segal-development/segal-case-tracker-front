@@ -65,6 +65,9 @@ export interface Documento {
   peso: string;
   fecha: string;
   autor: string;
+  docType?: string;
+  available?: boolean;
+  downloadUrl?: string;
 }
 
 export interface ProdAbogado {

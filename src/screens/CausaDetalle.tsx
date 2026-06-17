@@ -24,7 +24,10 @@ import { Btn } from "@/components/primitives/Btn";
 import { Pill } from "@/components/primitives/Pill";
 import { useCausa } from "@/hooks/useCausa";
 import { useActuaciones } from "@/hooks/useActuaciones";
-import { PLAZOS, DOCUMENTOS_C1, ABOGADOS } from "@/data/mock";
+import { useDocumentos } from "@/hooks/useDocumentos";
+import { Splash } from "@/components/Splash";
+import { fetchBlob } from "@/lib/api";
+import { PLAZOS, ABOGADOS } from "@/data/mock";
 import { fmtCLP, fmtDate } from "@/lib/format";
 import type { Causa, Plazo } from "@/data/types";
 
@@ -463,7 +466,89 @@ const iconBtnCss: CSSProperties = {
   justifyContent: "center",
 };
 
-function TabDocumentos({ onOpenModal }: { onOpenModal: (modal: string) => void }) {
+/* Red "PDF" thumbnail for PDFs, generic doc tile otherwise. */
+function DocThumb({ isPdf }: { isPdf: boolean }) {
+  if (isPdf) {
+    return (
+      <div
+        style={{
+          width: 36,
+          height: 44,
+          background: "var(--fj-rojo-soft)",
+          border: "1px solid var(--fj-rojo)",
+          borderRadius: 4,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flex: "0 0 auto",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--fj-body)",
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: ".06em",
+            color: "var(--fj-rojo)",
+          }}
+        >
+          PDF
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div
+      style={{
+        width: 36,
+        height: 44,
+        background: "var(--fj-panel2)",
+        border: "1px solid var(--fj-line-strong)",
+        borderRadius: 4,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "var(--fj-ink3)",
+        flex: "0 0 auto",
+      }}
+    >
+      <DocIcon size={16} strokeWidth={1.6} />
+    </div>
+  );
+}
+
+async function openDocument(downloadUrl: string, mode: "view" | "download", filename: string) {
+  // For "view" we must pre-open the tab synchronously (popup-blocker safe).
+  const win = mode === "view" ? window.open("", "_blank") : null;
+  try {
+    const blob = await fetchBlob(downloadUrl);
+    const url = URL.createObjectURL(blob);
+    if (mode === "download") {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+      a.click();
+    } else if (win) {
+      win.location.href = url;
+    } else {
+      window.open(url, "_blank");
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch {
+    if (win) win.close();
+    alert("No se pudo abrir el documento (puede no estar descargado todavía).");
+  }
+}
+
+function TabDocumentos({
+  causaId,
+  onOpenModal,
+}: {
+  causaId: string;
+  onOpenModal: (modal: string) => void;
+}) {
+  const { data: docs = [], isLoading } = useDocumentos(causaId);
+
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
       <div
@@ -485,67 +570,87 @@ function TabDocumentos({ onOpenModal }: { onOpenModal: (modal: string) => void }
           Subir documento
         </Btn>
       </div>
-      {DOCUMENTOS_C1.map((d, i) => (
+
+      {isLoading && (
+        <div style={{ padding: "28px 20px" }}>
+          <Splash inline label="Cargando documentos" />
+        </div>
+      )}
+
+      {!isLoading && docs.length === 0 && (
         <div
-          key={d.id}
           style={{
-            padding: "14px 20px",
-            display: "grid",
-            gridTemplateColumns: "auto 1fr auto auto auto",
-            gap: 14,
-            alignItems: "center",
-            borderBottom: i === DOCUMENTOS_C1.length - 1 ? "none" : "1px solid var(--fj-line)",
+            padding: "28px 20px",
+            fontFamily: "var(--fj-body)",
+            fontSize: 13,
+            color: "var(--fj-ink3)",
           }}
         >
-          <div
-            style={{
-              width: 36,
-              height: 44,
-              background: "var(--fj-panel2)",
-              border: "1px solid var(--fj-line-strong)",
-              borderRadius: 4,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--fj-ink3)",
-              flex: "0 0 auto",
-            }}
-          >
-            <DocIcon size={16} strokeWidth={1.6} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontFamily: "var(--fj-body)",
-                fontSize: 13.5,
-                color: "var(--fj-ink)",
-                fontWeight: 500,
-              }}
-            >
-              {d.nombre}
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--fj-body)",
-                fontSize: 11.5,
-                color: "var(--fj-ink3)",
-                marginTop: 2,
-              }}
-            >
-              {d.peso} · subido por {d.autor}
-            </div>
-          </div>
-          <span style={{ fontFamily: "var(--fj-body)", fontSize: 12, color: "var(--fj-ink3)" }}>
-            {fmtDate(d.fecha)}
-          </span>
-          <button style={iconBtnCss}>
-            <EyeIcon size={15} strokeWidth={1.6} />
-          </button>
-          <button style={iconBtnCss}>
-            <DownloadIcon size={15} strokeWidth={1.6} />
-          </button>
+          Sin documentos registrados para esta causa.
         </div>
-      ))}
+      )}
+
+      {!isLoading &&
+        docs.map((d, i) => {
+          const isPdf =
+            d.nombre.toLowerCase().endsWith(".pdf") ||
+            (d.docType ?? "").toLowerCase().includes("pdf");
+          const viewable = d.available && Boolean(d.downloadUrl);
+          return (
+            <div
+              key={d.id}
+              style={{
+                padding: "14px 20px",
+                display: "grid",
+                gridTemplateColumns: "auto 1fr auto auto",
+                gap: 14,
+                alignItems: "center",
+                borderBottom: i === docs.length - 1 ? "none" : "1px solid var(--fj-line)",
+              }}
+            >
+              <DocThumb isPdf={isPdf} />
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: "var(--fj-body)",
+                    fontSize: 13.5,
+                    color: "var(--fj-ink)",
+                    fontWeight: 500,
+                  }}
+                >
+                  {d.nombre}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "var(--fj-body)",
+                    fontSize: 11.5,
+                    color: viewable ? "var(--fj-ink3)" : "var(--fj-amarillo)",
+                    marginTop: 2,
+                  }}
+                >
+                  {d.docType ?? "Documento"}
+                  {viewable ? "" : " · no descargado aún"}
+                </div>
+              </div>
+              <button
+                style={{ ...iconBtnCss, opacity: viewable ? 1 : 0.35, cursor: viewable ? "pointer" : "not-allowed" }}
+                title={viewable ? "Ver documento" : "No disponible todavía"}
+                disabled={!viewable}
+                onClick={() => viewable && openDocument(d.downloadUrl!, "view", d.nombre)}
+              >
+                <EyeIcon size={15} strokeWidth={1.6} />
+              </button>
+              <button
+                style={{ ...iconBtnCss, opacity: viewable ? 1 : 0.35, cursor: viewable ? "pointer" : "not-allowed" }}
+                title={viewable ? "Descargar" : "No disponible todavía"}
+                disabled={!viewable}
+                onClick={() => viewable && openDocument(d.downloadUrl!, "download", d.nombre)}
+              >
+                <DownloadIcon size={15} strokeWidth={1.6} />
+              </button>
+            </div>
+          );
+        })}
     </Card>
   );
 }
@@ -666,6 +771,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
   }
 
   const causaPlazos = PLAZOS.filter((p) => p.causaId === causa.id);
+  const { data: docsList = [] } = useDocumentos(causa.id);
 
   const stripeColor =
     causa.semaforo === "rojo"
@@ -689,7 +795,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
   const tabs: Array<{ id: TabId; label: string; badge?: number }> = [
     { id: "info", label: "Información" },
     { id: "plazos", label: "Plazos", badge: causaPlazos.length },
-    { id: "documentos", label: "Documentos", badge: DOCUMENTOS_C1.length },
+    { id: "documentos", label: "Documentos", badge: docsList.length },
     { id: "timeline", label: "Timeline" },
   ];
 
@@ -902,7 +1008,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
       {tab === "plazos" && (
         <TabPlazos plazos={causaPlazos} onOpenModal={handleOpenModal} />
       )}
-      {tab === "documentos" && <TabDocumentos onOpenModal={handleOpenModal} />}
+      {tab === "documentos" && <TabDocumentos causaId={causa.id} onOpenModal={handleOpenModal} />}
       {tab === "timeline" && <TabTimeline causaId={causa.id} />}
     </div>
   );
