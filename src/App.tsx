@@ -13,9 +13,12 @@ import { Admin } from "@/screens/Admin";
 import { PlaceholderScreen } from "@/screens/PlaceholderScreen";
 import { Showcase } from "@/screens/Showcase";
 import { NuevaCausaModal, SubirDocumentoModal, NuevoPlazoModal } from "@/components/modals";
+import { SelectLawyer } from "@/screens/SelectLawyer";
+import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 
-function RequireAuth({ authed }: { authed: boolean }) {
+function RequireAuth({ authed, hasAbogado }: { authed: boolean; hasAbogado: boolean }) {
   if (!authed) return <Navigate to="/login" replace />;
+  if (!hasAbogado) return <Navigate to="/select-lawyer" replace />;
   return <Outlet />;
 }
 
@@ -50,8 +53,9 @@ function PlazosRoute() {
 }
 
 export default function App() {
-  // Persist the (mock) auth flag so direct links and refreshes keep the session.
   const [authed, setAuthed] = useState(() => localStorage.getItem("sd_authed") === "1");
+  const { abogado } = useSelectedLawyer();
+
   const login = () => {
     localStorage.setItem("sd_authed", "1");
     setAuthed(true);
@@ -60,29 +64,39 @@ export default function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={<Splash />}>
-      <Routes>
-        <Route
-          path="/login"
-          element={authed ? <Navigate to="/" replace /> : <LoginScreen onLogin={login} />}
-        />
-        <Route path="/showcase" element={<Showcase />} />
+        <Routes>
+          <Route
+            path="/login"
+            element={authed ? <Navigate to="/" replace /> : <LoginScreen onLogin={login} />}
+          />
+          <Route path="/showcase" element={<Showcase />} />
+          <Route
+            path="/select-lawyer"
+            element={
+              !authed
+                ? <Navigate to="/login" replace />
+                : abogado
+                  ? <Navigate to="/" replace />
+                  : <SelectLawyer />
+            }
+          />
 
-        <Route element={<RequireAuth authed={authed} />}>
-          <Route element={<AppLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="causas" element={<CausasRoute />} />
-            <Route path="causas/:id" element={<CausaDetalleRoute />} />
-            <Route path="plazos" element={<PlazosRoute />} />
-            <Route path="productividad" element={<Productividad />} />
-            <Route path="supervisor" element={<Supervisor />} />
-            <Route path="admin" element={<Admin />} />
-            <Route path="movil" element={<PlaceholderScreen name="Móvil" />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+          <Route element={<RequireAuth authed={authed} hasAbogado={!!abogado} />}>
+            <Route element={<AppLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="causas" element={<CausasRoute />} />
+              <Route path="causas/:id" element={<CausaDetalleRoute />} />
+              <Route path="plazos" element={<PlazosRoute />} />
+              <Route path="productividad" element={<Productividad />} />
+              <Route path="supervisor" element={<Supervisor />} />
+              <Route path="admin" element={<Admin />} />
+              <Route path="movil" element={<PlaceholderScreen name="Móvil" />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
       </Suspense>
     </BrowserRouter>
   );

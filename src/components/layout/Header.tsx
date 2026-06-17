@@ -1,12 +1,31 @@
 import { useState } from "react";
 import type { MouseEvent } from "react";
-import { Bell, Search, ChevronDown, Clock } from "lucide-react";
+import { Bell, Search, Clock } from "lucide-react";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { useRole } from "@/hooks/useRole";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
+import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 import type { Role } from "@/hooks/useRole";
+
+function getInitials(nombre: string): string {
+  return nombre
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+}
+
+const AVATAR_PALETTE = [
+  "#1a56db", "#0e9f6e", "#7e3af2", "#e3a008",
+  "#e02424", "#3f83f8", "#057a55", "#8b5cf6",
+];
+function colorFromName(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length]!;
+}
 
 function NotifPanel({ onClose }: { onClose: () => void }) {
   const { data: notifs = [] } = useNotificaciones();
@@ -80,7 +99,7 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
 
 export function Header() {
   const { role, setRole } = useRole();
-  const { data: user } = useCurrentUser();
+  const { abogado, clear } = useSelectedLawyer();
   const { data: notifs = [] } = useNotificaciones();
   const [notifOpen, setNotifOpen] = useState(false);
 
@@ -148,16 +167,29 @@ export function Header() {
           display: "flex", alignItems: "center", gap: 10, paddingLeft: 12,
           borderLeft: "1px solid var(--fj-line)", height: 28, flexShrink: 0,
         }}>
-          {user && <Avatar iniciales={user.iniciales} color={user.color} nombre={user.nombre} size={30} />}
+          {abogado && (
+            <Avatar
+              iniciales={getInitials(abogado.nombre)}
+              color={colorFromName(abogado.nombre)}
+              nombre={abogado.nombre}
+              size={30}
+            />
+          )}
           <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2, whiteSpace: "nowrap" }}>
             <span style={{ fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink)", fontWeight: 600 }}>
-              {user?.nombre ?? "—"}
+              {abogado?.nombre ?? "—"}
             </span>
-            <span style={{ fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-ink3)" }}>
-              {user?.cargo} · {user?.empresa}
-            </span>
+            <button
+              onClick={clear}
+              style={{
+                fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-primary)",
+                background: "none", border: "none", cursor: "pointer",
+                padding: 0, textAlign: "left",
+              }}
+            >
+              Cambiar abogado
+            </button>
           </div>
-          <ChevronDown size={13} strokeWidth={1.8} color="var(--fj-ink3)" />
         </div>
 
         {/* Role switcher */}
