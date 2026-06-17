@@ -67,6 +67,7 @@ export interface Documento {
   autor: string;
   docType?: string;
   available?: boolean;
+  status?: string;
   downloadUrl?: string;
 }
 

@@ -630,7 +630,8 @@ function TabDocumentos({
         pageDocs.map((d, i) => {
           const kind = fileKind(d.nombre);
           const isPdf = kind === "pdf";
-          const viewable = d.available && Boolean(d.downloadUrl);
+          // Only GCS-stored docs are downloadable without a live PJUD session.
+          const viewable = d.status === "stored" && Boolean(d.downloadUrl);
           const title = docLabel(d);
           return (
             <div

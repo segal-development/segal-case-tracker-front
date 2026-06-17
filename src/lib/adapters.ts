@@ -122,6 +122,7 @@ export function docToDocumento(d: DocumentResponse): Documento {
     autor: '—',
     docType: d.doc_type,
     available: d.available,
+    status: d.status,
     downloadUrl: d.download_url,
   };
 }
