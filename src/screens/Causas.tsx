@@ -12,6 +12,7 @@ import { Btn } from "@/components/primitives/Btn";
 import { Pill } from "@/components/primitives/Pill";
 import { FilterDrawer } from "@/components/causas/FilterDrawer";
 import { Pagination } from "@/components/causas/Pagination";
+import { Splash } from "@/components/Splash";
 import { useCausas } from "@/hooks/useCausas";
 import { fmtCLP } from "@/lib/format";
 import type { Causa, SemaforoColor, SemaforoValue } from "@/data/types";
@@ -594,22 +595,22 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
       )}
 
       {/* Results */}
-      {view === "table"
-        ? (
-          <CausasTable
-            causas={paginated}
-            selected={selected}
-            toggle={toggle}
-            toggleAll={toggleAll}
-            onNavigate={(id) => navigate(`/causas/${id}`)}
-          />
-        )
-        : (
-          <CausasCards
-            causas={paginated}
-            onNavigate={(id) => navigate(`/causas/${id}`)}
-          />
-        )}
+      {isLoading && allCausas.length === 0 ? (
+        <Splash inline label="Cargando causas" />
+      ) : view === "table" ? (
+        <CausasTable
+          causas={paginated}
+          selected={selected}
+          toggle={toggle}
+          toggleAll={toggleAll}
+          onNavigate={(id) => navigate(`/causas/${id}`)}
+        />
+      ) : (
+        <CausasCards
+          causas={paginated}
+          onNavigate={(id) => navigate(`/causas/${id}`)}
+        />
+      )}
 
       {/* Pagination bar */}
       {filtered.length > 0 && (

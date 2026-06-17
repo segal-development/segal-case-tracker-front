@@ -6,6 +6,7 @@ import { SemaforoRing } from "@/components/primitives/SemaforoRing";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Btn } from "@/components/primitives/Btn";
 import { Card } from "@/components/primitives/Card";
+import { Splash } from "@/components/Splash";
 import { useCausas } from "@/hooks/useCausas";
 import type { Causa } from "@/data/types";
 
@@ -694,13 +695,7 @@ export function Plazos({ onNuevoPlazo = () => {} }: PlazosProps) {
   }, [abgFiltered, estado]);
 
   if (isLoading) {
-    return (
-      <div style={pageCss}>
-        <div style={{ fontFamily: "var(--fj-body)", color: "var(--fj-ink3)" }}>
-          Cargando plazos…
-        </div>
-      </div>
-    );
+    return <Splash inline label="Cargando plazos" />;
   }
 
   return (

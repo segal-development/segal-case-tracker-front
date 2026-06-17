@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Splash } from "@/components/Splash";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoginScreen } from "@/screens/LoginScreen";
 import { Dashboard } from "@/screens/Dashboard";
@@ -53,6 +54,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <Suspense fallback={<Splash />}>
       <Routes>
         <Route
           path="/login"
@@ -76,6 +78,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

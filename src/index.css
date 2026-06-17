@@ -221,3 +221,15 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Spinner / splash ring rotation (used by Spinner + Splash). */
+@keyframes fj-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="fj-rot"] {
+    animation-duration: 2s !important;
+  }
+}
