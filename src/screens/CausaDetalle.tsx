@@ -26,6 +26,7 @@ import { useCausa } from "@/hooks/useCausa";
 import { useActuaciones } from "@/hooks/useActuaciones";
 import { useDocumentos } from "@/hooks/useDocumentos";
 import { Splash } from "@/components/Splash";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { fetchBlob } from "@/lib/api";
 import { PLAZOS, ABOGADOS } from "@/data/mock";
 import { fmtCLP, fmtDate } from "@/lib/format";
@@ -540,6 +541,38 @@ async function openDocument(downloadUrl: string, mode: "view" | "download", file
   }
 }
 
+/* PJUD doc_type codes → human-readable Spanish labels. */
+const DOC_TYPE_LABELS: Record<string, string> = {
+  resolution: "Resolución",
+  resolucion: "Resolución",
+  escrito_doc: "Escrito",
+  escrito_cert: "Certificación de escrito",
+  escrito: "Escrito",
+  cert_envio: "Certificado de envío",
+  certificado: "Certificado",
+  demanda: "Demanda",
+  mandamiento: "Mandamiento",
+  notificacion: "Notificación",
+  exhorto: "Exhorto",
+  ebook: "Expediente digital",
+};
+
+function docLabel(d: { nombre: string; docType?: string }): string {
+  // A real filename with an extension → show it as-is.
+  if (/\.[a-z0-9]{2,4}$/i.test(d.nombre)) return d.nombre;
+  const key = (d.docType ?? d.nombre ?? "").toLowerCase().trim();
+  if (DOC_TYPE_LABELS[key]) return DOC_TYPE_LABELS[key];
+  return key
+    ? key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    : "Documento";
+}
+
+// PJUD documents are PDFs; only treat as non-PDF if the filename says otherwise.
+function isPdfDoc(d: { nombre: string }): boolean {
+  const m = d.nombre.toLowerCase().match(/\.([a-z0-9]{2,4})$/);
+  return !m || m[1] === "pdf";
+}
+
 function TabDocumentos({
   causaId,
   onOpenModal,
@@ -548,6 +581,25 @@ function TabDocumentos({
   onOpenModal: (modal: string) => void;
 }) {
   const { data: docs = [], isLoading } = useDocumentos(causaId);
+  const [viewer, setViewer] = useState<{ name: string; url: string | null; downloadUrl: string } | null>(null);
+
+  const handleView = async (d: (typeof docs)[number]) => {
+    const name = docLabel(d);
+    setViewer({ name, url: null, downloadUrl: d.downloadUrl! });
+    try {
+      const blob = await fetchBlob(d.downloadUrl!);
+      setViewer({ name, url: URL.createObjectURL(blob), downloadUrl: d.downloadUrl! });
+    } catch {
+      setViewer(null);
+      alert("No se pudo abrir el documento.");
+    }
+  };
+
+  const closeViewer = () =>
+    setViewer((v) => {
+      if (v?.url) URL.revokeObjectURL(v.url);
+      return null;
+    });
 
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
@@ -592,17 +644,16 @@ function TabDocumentos({
 
       {!isLoading &&
         docs.map((d, i) => {
-          const isPdf =
-            d.nombre.toLowerCase().endsWith(".pdf") ||
-            (d.docType ?? "").toLowerCase().includes("pdf");
+          const isPdf = isPdfDoc(d);
           const viewable = d.available && Boolean(d.downloadUrl);
+          const title = docLabel(d);
           return (
             <div
               key={d.id}
               style={{
                 padding: "14px 20px",
                 display: "grid",
-                gridTemplateColumns: "auto 1fr auto auto",
+                gridTemplateColumns: "auto 1fr auto auto auto",
                 gap: 14,
                 alignItems: "center",
                 borderBottom: i === docs.length - 1 ? "none" : "1px solid var(--fj-line)",
@@ -618,7 +669,7 @@ function TabDocumentos({
                     fontWeight: 500,
                   }}
                 >
-                  {d.nombre}
+                  {title}
                 </div>
                 <div
                   style={{
@@ -628,15 +679,30 @@ function TabDocumentos({
                     marginTop: 2,
                   }}
                 >
-                  {d.docType ?? "Documento"}
+                  {isPdf ? "Documento PDF" : "Documento"}
                   {viewable ? "" : " · no descargado aún"}
                 </div>
               </div>
+              {/* file-format chip */}
+              <span
+                style={{
+                  fontFamily: "var(--fj-body)",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: ".06em",
+                  color: "var(--fj-ink3)",
+                  border: "1px solid var(--fj-line)",
+                  borderRadius: 4,
+                  padding: "2px 6px",
+                }}
+              >
+                {isPdf ? "PDF" : (d.nombre.match(/\.([a-z0-9]{2,4})$/i)?.[1] ?? "DOC").toUpperCase()}
+              </span>
               <button
                 style={{ ...iconBtnCss, opacity: viewable ? 1 : 0.35, cursor: viewable ? "pointer" : "not-allowed" }}
                 title={viewable ? "Ver documento" : "No disponible todavía"}
                 disabled={!viewable}
-                onClick={() => viewable && openDocument(d.downloadUrl!, "view", d.nombre)}
+                onClick={() => viewable && handleView(d)}
               >
                 <EyeIcon size={15} strokeWidth={1.6} />
               </button>
@@ -644,13 +710,22 @@ function TabDocumentos({
                 style={{ ...iconBtnCss, opacity: viewable ? 1 : 0.35, cursor: viewable ? "pointer" : "not-allowed" }}
                 title={viewable ? "Descargar" : "No disponible todavía"}
                 disabled={!viewable}
-                onClick={() => viewable && openDocument(d.downloadUrl!, "download", d.nombre)}
+                onClick={() => viewable && openDocument(d.downloadUrl!, "download", title)}
               >
                 <DownloadIcon size={15} strokeWidth={1.6} />
               </button>
             </div>
           );
         })}
+
+      {viewer && (
+        <PdfViewerModal
+          name={viewer.name}
+          url={viewer.url}
+          onClose={closeViewer}
+          onDownload={() => openDocument(viewer.downloadUrl, "download", viewer.name)}
+        />
+      )}
     </Card>
   );
 }
