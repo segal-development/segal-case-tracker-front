@@ -752,26 +752,14 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("info");
   const { data: causa } = useCausa(id);
+  // Hooks must run unconditionally — keep this ABOVE the early return below.
+  const { data: docsList = [] } = useDocumentos(id);
 
   if (!causa) {
-    return (
-      <div style={pageCss}>
-        <div
-          style={{
-            fontFamily: "var(--fj-body)",
-            color: "var(--fj-ink3)",
-            fontSize: 14,
-            paddingTop: 40,
-          }}
-        >
-          Cargando...
-        </div>
-      </div>
-    );
+    return <Splash inline label="Cargando causa" />;
   }
 
   const causaPlazos = PLAZOS.filter((p) => p.causaId === causa.id);
-  const { data: docsList = [] } = useDocumentos(causa.id);
 
   const stripeColor =
     causa.semaforo === "rojo"
