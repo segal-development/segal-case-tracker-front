@@ -50,6 +50,7 @@ export interface DocumentResponse {
   status: string;
   available: boolean;
   download_url: string;
+  doc_date: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,7 +119,7 @@ export function docToDocumento(d: DocumentResponse): Documento {
     id: String(d.id),
     nombre: d.filename ?? d.doc_type,
     peso: '—',
-    fecha: '—',
+    fecha: d.doc_date ?? '—',
     autor: '—',
     docType: d.doc_type,
     available: d.available,
