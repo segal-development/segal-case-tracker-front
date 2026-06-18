@@ -609,7 +609,9 @@ function TabDocumentos({
                   }}
                 >
                   {isPdf ? "Documento PDF" : "Documento"}
-                  {d.fecha && d.fecha !== "—" ? ` · ${fmtDate(d.fecha)}` : ""}
+                  {d.fecha && d.fecha !== "—"
+                    ? ` · ${fmtDate(d.fecha)}`
+                    : " · sin fecha en los datos de PJUD"}
                   {viewable ? "" : " · no descargado aún"}
                 </div>
               </div>
