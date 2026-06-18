@@ -18,7 +18,9 @@ const TONE_COLORS: Record<PillTone, { bg: string; fg: string }> = {
 };
 
 export function Pill({ children, tone = "neutral", subtle = false, style }: PillProps) {
-  const c = TONE_COLORS[tone];
+  // Fall back to neutral for any unknown tone (e.g. "gris") so an unexpected
+  // value never crashes the page.
+  const c = TONE_COLORS[tone] ?? TONE_COLORS.neutral;
   return (
     <span
       style={{
