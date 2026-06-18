@@ -387,7 +387,6 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
   const [sem, setSem] = useState("todas");
-  const [abg, setAbg] = useState("todos");
   const [trib, setTrib] = useState("todos");
   const [mat, setMat] = useState("todas");
   const [page, setPage] = useState(1);
@@ -408,18 +407,17 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
           if (c.semaforo !== null) return false;
         } else if (c.semaforo !== (sem as SemaforoColor)) return false;
       }
-      if (abg !== "todos" && c.abogado.id !== abg) return false;
       if (trib !== "todos" && c.tribunal !== trib) return false;
       if (mat !== "todas" && c.materia !== mat) return false;
       if (q && !(`${c.rol} ${c.caratula}`.toLowerCase().includes(q.toLowerCase()))) return false;
       return true;
     });
-  }, [allCausas, q, sem, abg, trib, mat]);
+  }, [allCausas, q, sem, trib, mat]);
 
   // Reset to page 1 whenever any filter, search term, or page size changes.
   useEffect(() => {
     setPage(1);
-  }, [q, sem, abg, trib, mat, pageSize]);
+  }, [q, sem, trib, mat, pageSize]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginated = useMemo(
@@ -440,7 +438,7 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
     else setSelected(new Set(filtered.map((c) => c.id)));
   }
 
-  const hasActiveFilters = abg !== "todos" || trib !== "todos" || mat !== "todas";
+  const hasActiveFilters = trib !== "todos" || mat !== "todas";
 
   return (
     <div style={pageCss}>
@@ -628,10 +626,9 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
       {filterOpen && (
         <FilterDrawer
           onClose={() => setFilterOpen(false)}
-          abg={abg} setAbg={setAbg}
           trib={trib} setTrib={setTrib}
           mat={mat} setMat={setMat}
-          onReset={() => { setAbg("todos"); setTrib("todos"); setMat("todas"); }}
+          onReset={() => { setTrib("todos"); setMat("todas"); }}
         />
       )}
     </div>

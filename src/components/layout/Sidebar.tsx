@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import type { MouseEvent } from "react";
 import {
   Home, Briefcase, Clock, TrendingUp, Users, Settings, Smartphone, RefreshCw,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Bell,
 } from "lucide-react";
 import { SDMark } from "@/components/primitives/SDMark";
 import { Wordmark } from "@/components/primitives/Wordmark";
@@ -10,6 +10,7 @@ import { Pill } from "@/components/primitives/Pill";
 import { useRole } from "@/hooks/useRole";
 import { CAUSAS, RESUMEN_PLAZOS, ADMIN } from "@/data/mock";
 import type { Role } from "@/hooks/useRole";
+import { useNovedades } from "@/novedades/useNovedades";
 
 interface NavItem {
   path: string;
@@ -19,13 +20,14 @@ interface NavItem {
   badgeTone?: "rojo" | "neutral";
 }
 
-function getNavItems(role: Role): NavItem[] {
+function getNavItems(role: Role, novedadesCount: number): NavItem[] {
   const causasBadge = CAUSAS.length;
   const plazosBadge = RESUMEN_PLAZOS.proximos + RESUMEN_PLAZOS.vencidos;
 
   if (role === "supervisor") {
     return [
       { path: "/",              label: "Vista de estudio", icon: <Home size={17} strokeWidth={1.6} /> },
+      { path: "/novedades",     label: "Novedades",        icon: <Bell size={17} strokeWidth={1.6} />, badge: novedadesCount },
       { path: "/causas",        label: "Causas",           icon: <Briefcase size={17} strokeWidth={1.6} />, badge: causasBadge },
       { path: "/productividad", label: "Equipo",           icon: <TrendingUp size={17} strokeWidth={1.6} /> },
       { path: "/plazos",        label: "Plazos",           icon: <Clock size={17} strokeWidth={1.6} /> },
@@ -36,6 +38,7 @@ function getNavItems(role: Role): NavItem[] {
   if (role === "admin") {
     return [
       { path: "/",              label: "Centro operativo", icon: <Home size={17} strokeWidth={1.6} />, badge: ADMIN.SIN_ASIGNAR.length, badgeTone: "rojo" },
+      { path: "/novedades",     label: "Novedades",        icon: <Bell size={17} strokeWidth={1.6} />, badge: novedadesCount },
       { path: "/causas",        label: "Causas",           icon: <Briefcase size={17} strokeWidth={1.6} />, badge: causasBadge },
       { path: "/plazos",        label: "Plazos",           icon: <Clock size={17} strokeWidth={1.6} /> },
       { path: "/productividad", label: "Reportes",         icon: <TrendingUp size={17} strokeWidth={1.6} /> },
@@ -47,6 +50,7 @@ function getNavItems(role: Role): NavItem[] {
   // abogado (default)
   return [
     { path: "/",              label: "Dashboard",     icon: <Home size={17} strokeWidth={1.6} /> },
+    { path: "/novedades",     label: "Novedades",     icon: <Bell size={17} strokeWidth={1.6} />, badge: novedadesCount },
     { path: "/causas",        label: "Causas",        icon: <Briefcase size={17} strokeWidth={1.6} />, badge: causasBadge },
     { path: "/plazos",        label: "Plazos",        icon: <Clock size={17} strokeWidth={1.6} />, badge: plazosBadge, badgeTone: "rojo" },
     { path: "/productividad", label: "Productividad", icon: <TrendingUp size={17} strokeWidth={1.6} /> },
@@ -68,7 +72,8 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const { role } = useRole();
   const location = useLocation();
   const navigate = useNavigate();
-  const items = getNavItems(role);
+  const { count: novedadesCount } = useNovedades();
+  const items = getNavItems(role, novedadesCount);
 
   const activePath = location.pathname;
 

@@ -1,12 +1,10 @@
 import type { CSSProperties } from "react";
 import { X } from "lucide-react";
 import { Btn } from "@/components/primitives/Btn";
-import { ABOGADOS, TRIBUNALES, MATERIAS } from "@/data/mock";
+import { TRIBUNALES, MATERIAS } from "@/data/mock";
 
 export interface FilterDrawerProps {
   onClose: () => void;
-  abg: string;
-  setAbg: (v: string) => void;
   trib: string;
   setTrib: (v: string) => void;
   mat: string;
@@ -69,7 +67,7 @@ function FilterSelect({
 }
 
 export function FilterDrawer({
-  onClose, abg, setAbg, trib, setTrib, mat, setMat, onReset,
+  onClose, trib, setTrib, mat, setMat, onReset,
 }: FilterDrawerProps) {
   return (
     <>
@@ -112,15 +110,6 @@ export function FilterDrawer({
           flex: 1, overflowY: "auto", padding: "20px 24px",
           display: "flex", flexDirection: "column", gap: 20,
         }}>
-          <FilterSelect
-            label="Abogado responsable"
-            value={abg}
-            onChange={setAbg}
-            options={[
-              ["todos", "Todos los abogados"],
-              ...ABOGADOS.map((a): [string, string] => [a.id, a.nombre]),
-            ]}
-          />
           <FilterSelect
             label="Tribunal"
             value={trib}
