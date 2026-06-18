@@ -10,6 +10,7 @@ import { Plazos } from "@/screens/Plazos";
 import { Productividad } from "@/screens/Productividad";
 import { Supervisor } from "@/screens/Supervisor";
 import { Admin } from "@/screens/Admin";
+import { Novedades } from "@/screens/Novedades";
 import { PlaceholderScreen } from "@/screens/PlaceholderScreen";
 import { Showcase } from "@/screens/Showcase";
 import { NuevaCausaModal, SubirDocumentoModal, NuevoPlazoModal } from "@/components/modals";
@@ -91,6 +92,7 @@ export default function App() {
               <Route path="supervisor" element={<Supervisor />} />
               <Route path="admin" element={<Admin />} />
               <Route path="movil" element={<PlaceholderScreen name="Móvil" />} />
+              <Route path="novedades" element={<Novedades />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>
