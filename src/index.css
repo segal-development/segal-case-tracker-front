@@ -228,8 +228,13 @@
     transform: rotate(360deg);
   }
 }
+@keyframes fj-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
 @media (prefers-reduced-motion: reduce) {
-  [style*="fj-rot"] {
+  [style*="fj-rot"],
+  [style*="fj-shimmer"] {
     animation-duration: 2s !important;
   }
 }

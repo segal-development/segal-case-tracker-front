@@ -1,11 +1,14 @@
 import { useState } from "react";
 import type { MouseEvent } from "react";
-import { Bell, Search, Clock } from "lucide-react";
+import { Bell, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { useRole } from "@/hooks/useRole";
-import { useNotificaciones } from "@/hooks/useNotificaciones";
+import { useNovedades } from "@/novedades/useNovedades";
+import type { Novedad } from "@/novedades/useNovedades";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
+import { fromNow } from "@/lib/format";
 import type { Role } from "@/hooks/useRole";
 
 function getInitials(nombre: string): string {
@@ -27,10 +30,27 @@ function colorFromName(name: string): string {
   return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length]!;
 }
 
-function NotifPanel({ onClose }: { onClose: () => void }) {
-  const { data: notifs = [] } = useNotificaciones();
-  const unread = notifs.filter((n) => !n.leido);
-  const hasUnread = unread.length > 0;
+interface NotifPanelProps {
+  novedades: Novedad[];
+  count: number;
+  markAllSeen: () => void;
+  isLoading: boolean;
+  onClose: () => void;
+}
+
+function NotifPanel({ novedades, count, markAllSeen, isLoading, onClose }: NotifPanelProps) {
+  const navigate = useNavigate();
+  const visible = novedades.slice(0, 6);
+
+  function handleRowClick(causaId: string) {
+    navigate(`/causas/${causaId}`);
+    onClose();
+  }
+
+  function handleMarkAllSeen() {
+    markAllSeen();
+    onClose();
+  }
 
   return (
     <>
@@ -40,57 +60,85 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
         background: "var(--fj-panel)", border: "1px solid var(--fj-line)",
         borderRadius: 12, boxShadow: "0 10px 30px rgba(15,22,38,.14)", overflow: "hidden",
       }}>
+        {/* Header */}
         <div style={{
           padding: "14px 16px", borderBottom: "1px solid var(--fj-line)",
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <span style={{ fontFamily: "var(--fj-heading)", fontSize: 16, color: "var(--fj-ink)", fontWeight: 500 }}>
-            Notificaciones {hasUnread && `(${unread.length})`}
+            Novedades{count > 0 ? ` (${count})` : ""}
           </span>
+          {count > 0 && (
+            <button
+              onClick={handleMarkAllSeen}
+              style={{
+                fontFamily: "var(--fj-body)", fontSize: 12, color: "var(--fj-primary)",
+                background: "none", border: "none", cursor: "pointer", padding: 0,
+              }}
+            >
+              Marcar todas como vistas
+            </button>
+          )}
+        </div>
+
+        {/* Body */}
+        <div style={{ maxHeight: 380, overflowY: "auto" }}>
+          {isLoading ? (
+            <div style={{ padding: "20px 16px", textAlign: "center", fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink3)" }}>
+              Cargando…
+            </div>
+          ) : count === 0 ? (
+            <div style={{ padding: "24px 16px", textAlign: "center", fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink3)" }}>
+              Sin novedades
+            </div>
+          ) : (
+            visible.map((nov) => (
+              <div key={nov.causa.id} style={{ borderBottom: "1px solid var(--fj-line)" }}>
+                <button
+                  onClick={() => handleRowClick(nov.causa.id)}
+                  style={{
+                    display: "flex", flexDirection: "column", alignItems: "flex-start",
+                    width: "100%", padding: "12px 16px", gap: 2,
+                    background: nov.isNew ? "var(--fj-primary-soft)" : "transparent",
+                    border: "none",
+                    cursor: "pointer", textAlign: "left",
+                  }}
+                  onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => {
+                    e.currentTarget.style.background = "var(--fj-panel2)";
+                  }}
+                  onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => {
+                    e.currentTarget.style.background = nov.isNew ? "var(--fj-primary-soft)" : "transparent";
+                  }}
+                >
+                  <span style={{ fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink)", lineHeight: 1.4, fontWeight: nov.isNew ? 600 : 400 }}>
+                    Movimiento nuevo · {nov.causa.rol}
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-ink3)", lineHeight: 1.3,
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%",
+                  }}>
+                    {nov.causa.caratula.length > 50
+                      ? nov.causa.caratula.slice(0, 50) + "…"
+                      : nov.causa.caratula
+                    } · {fromNow(nov.ultima)}
+                  </span>
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "10px 16px", borderTop: "1px solid var(--fj-line)", textAlign: "center" }}>
           <button
-            onClick={onClose}
+            onClick={() => { navigate("/novedades"); onClose(); }}
             style={{
               fontFamily: "var(--fj-body)", fontSize: 12, color: "var(--fj-primary)",
               background: "none", border: "none", cursor: "pointer", padding: 0,
             }}
           >
-            Marcar todas como leídas
+            Ver todas
           </button>
-        </div>
-        <div style={{ maxHeight: 380, overflowY: "auto" }}>
-          {notifs.map((n) => (
-            <div key={n.id} style={{
-              padding: "12px 16px", display: "flex", gap: 10,
-              borderBottom: "1px solid var(--fj-line)",
-              background: n.leido ? "transparent" : "var(--fj-primary-soft)",
-              opacity: n.leido ? 0.7 : 1,
-            }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                background: n.tipo === "vencimiento" || n.tipo === "plazo"
-                  ? "var(--fj-rojo-soft)" : "var(--fj-panel2)",
-                color: n.tipo === "vencimiento" || n.tipo === "plazo"
-                  ? "var(--fj-rojo)" : "var(--fj-ink2)",
-              }}>
-                <Clock size={14} strokeWidth={1.8} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink)", lineHeight: 1.4 }}>
-                  {n.texto}
-                </div>
-                <div style={{ fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-ink3)", marginTop: 2 }}>
-                  {n.tiempo}
-                </div>
-              </div>
-              {!n.leido && (
-                <span style={{
-                  width: 6, height: 6, borderRadius: 999,
-                  background: "var(--fj-primary)", alignSelf: "center", flexShrink: 0,
-                }} />
-              )}
-            </div>
-          ))}
         </div>
       </div>
     </>
@@ -100,10 +148,10 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
 export function Header() {
   const { role, setRole } = useRole();
   const { abogado, clear } = useSelectedLawyer();
-  const { data: notifs = [] } = useNotificaciones();
+  const { novedades, count, markAllSeen, isLoading } = useNovedades();
   const [notifOpen, setNotifOpen] = useState(false);
 
-  const hasUnread = notifs.some((n) => !n.leido);
+  const badgeLabel = count > 9 ? "9+" : String(count);
 
   return (
     <header style={{
@@ -151,14 +199,20 @@ export function Header() {
           onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => {
             e.currentTarget.style.background = "transparent";
           }}
-          title="Notificaciones"
+          title="Novedades"
         >
           <Bell size={16} strokeWidth={1.8} />
-          {hasUnread && (
+          {count > 0 && (
             <span style={{
-              position: "absolute", top: 6, right: 7, width: 7, height: 7, borderRadius: 999,
+              position: "absolute", top: 4, right: 3,
+              minWidth: count > 9 ? 18 : 14, height: 14, borderRadius: 999,
               background: "var(--fj-rojo)", border: "1.5px solid var(--fj-panel)",
-            }} />
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "var(--fj-mono)", fontSize: 9, color: "#fff",
+              fontWeight: 700, lineHeight: 1, padding: "0 2px",
+            }}>
+              {badgeLabel}
+            </span>
           )}
         </button>
 
@@ -210,7 +264,15 @@ export function Header() {
         </select>
       </div>
 
-      {notifOpen && <NotifPanel onClose={() => setNotifOpen(false)} />}
+      {notifOpen && (
+        <NotifPanel
+          novedades={novedades}
+          count={count}
+          markAllSeen={markAllSeen}
+          isLoading={isLoading}
+          onClose={() => setNotifOpen(false)}
+        />
+      )}
     </header>
   );
 }

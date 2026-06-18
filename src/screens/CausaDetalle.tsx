@@ -609,6 +609,7 @@ function TabDocumentos({
                   }}
                 >
                   {isPdf ? "Documento PDF" : "Documento"}
+                  {d.fecha && d.fecha !== "—" ? ` · ${fmtDate(d.fecha)}` : ""}
                   {viewable ? "" : " · no descargado aún"}
                 </div>
               </div>

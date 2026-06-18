@@ -66,7 +66,19 @@ export function useCausas() {
         ...rest.flatMap((p) => p.items),
       ];
 
-      return allItems.map((item) => caseToCausa(item, derivedAbogado));
+      // Paginating by a non-unique sort (criticidad) can return the same case on
+      // more than one page → dedupe by id to avoid duplicate React keys, doubled
+      // cards, and inflated counts. (Backend follow-up: stable secondary sort.)
+      const seen = new Set<string>();
+      const unique: Causa[] = [];
+      for (const item of allItems) {
+        const causa = caseToCausa(item, derivedAbogado);
+        if (!seen.has(causa.id)) {
+          seen.add(causa.id);
+          unique.push(causa);
+        }
+      }
+      return unique;
     },
   });
 }
