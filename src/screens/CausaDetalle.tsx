@@ -27,6 +27,7 @@ import { useCausa } from "@/hooks/useCausa";
 import { useActuaciones } from "@/hooks/useActuaciones";
 import { useDocumentos } from "@/hooks/useDocumentos";
 import { usePartes } from "@/hooks/usePartes";
+import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 import { Splash } from "@/components/Splash";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { fetchBlob } from "@/lib/api";
@@ -190,17 +191,46 @@ function ParteCard({
 function TabInfo({
   causa,
   onOpenModal,
-  firmLawyerNombre,
+  partes,
   latestActuacion,
 }: {
   causa: Causa;
   onOpenModal: (modal: string) => void;
-  firmLawyerNombre: string;
+  partes: Array<{ participante: string; rut: string; nombre: string }>;
   latestActuacion: Actuacion | undefined;
 }) {
-  const parts = causa.caratula.split(" / ");
-  const demandante = parts[0] ?? "—";
-  const adverso = parts[1] ?? "—";
+  const caratulaParts = causa.caratula.split(" / ");
+
+  // Party litigantes
+  const dteLitigante = partes.find((p) => p.participante === "DTE.");
+  const ddoLitigante = partes.find((p) => p.participante === "DDO.");
+
+  const dteNombre = dteLitigante
+    ? _cleanName(dteLitigante.nombre)
+    : (caratulaParts[0] ?? "—");
+  const ddoNombre = ddoLitigante
+    ? _cleanName(ddoLitigante.nombre)
+    : (caratulaParts[1] ?? "—");
+
+  // Demandante rep: AB.DTE first, then AP.DTE
+  const abDte = partes.find((p) => p.participante === "AB.DTE");
+  const apDte = partes.find((p) => p.participante === "AP.DTE");
+  const dteRep = abDte
+    ? _cleanName(abDte.nombre)
+    : apDte
+    ? _cleanName(apDte.nombre)
+    : "Sin representación informada";
+
+  // Demandado reps: AB.DDO first, then AP.DDO; join if multiple
+  const ddoLawyers = partes.filter(
+    (p) => p.participante === "AB.DDO" || p.participante === "AP.DDO",
+  );
+  const ddoRep =
+    ddoLawyers.length === 0
+      ? "Sin representación informada"
+      : ddoLawyers.length === 1
+      ? _cleanName(ddoLawyers[0].nombre)
+      : `${_cleanName(ddoLawyers[0].nombre)} (+${ddoLawyers.length - 1})`;
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
@@ -221,11 +251,11 @@ function TabInfo({
         <Card pad={22}>
           <SubH>Partes</SubH>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <ParteCard rol="Demandante" nombre={demandante} rep={firmLawyerNombre} />
+            <ParteCard rol="Demandante" nombre={dteNombre} rep={dteRep} />
             <ParteCard
               rol="Demandado"
-              nombre={adverso}
-              rep="Sin representación informada"
+              nombre={ddoNombre}
+              rep={ddoRep}
               inverted
             />
           </div>
@@ -804,18 +834,33 @@ const _initials = (n: string) => {
 
 function resolveFirmLawyer(
   partes: { participante: string; rut: string; nombre: string }[],
+  selectedRut: string | null,
   fallback: { nombre: string; iniciales: string; color: string },
 ): { nombre: string; iniciales: string; color: string; side: string | null } {
-  const match = FIRM_RUT
-    ? partes.find((p) => _normRut(p.rut) === _normRut(FIRM_RUT))
+  // Only consider lawyer litigantes (AB.* / AP.*)
+  const lawyerPartes = partes.filter(
+    (p) => p.participante.startsWith("AB.") || p.participante.startsWith("AP."),
+  );
+
+  // Priority 1: the selected abogado if she appears in this case
+  const selectedMatch = selectedRut
+    ? lawyerPartes.find((p) => _normRut(p.rut) === _normRut(selectedRut))
     : undefined;
+
+  // Priority 2: firm RUT (Carla / account holder)
+  const firmMatch = FIRM_RUT
+    ? lawyerPartes.find((p) => _normRut(p.rut) === _normRut(FIRM_RUT))
+    : undefined;
+
+  const match = selectedMatch ?? firmMatch;
   if (!match) return { ...fallback, side: null };
+
   const nombre = _cleanName(match.nombre);
   const side = match.participante.includes("DTE")
     ? "Demandante"
     : match.participante.includes("DDO")
-      ? "Demandado"
-      : null;
+    ? "Demandado"
+    : null;
   return { nombre, iniciales: _initials(nombre), color: fallback.color, side };
 }
 
@@ -830,13 +875,14 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
   const { data: partes = [] } = usePartes(id);
   const { data: causaPlazos = [] } = useDeadlines(id);
   const { data: actuacionesList = [] } = useActuaciones(id);
+  const { abogado: selectedAbogado } = useSelectedLawyer();
 
   if (!causa) {
     return <Splash inline label="Cargando causa" />;
   }
 
-  // Real firm lawyer = the litigante whose RUT matches the firm account.
-  const firmLawyer = resolveFirmLawyer(partes, causa.abogado);
+  // Priority: selected abogado → firm RUT → causa.abogado fallback.
+  const firmLawyer = resolveFirmLawyer(partes, selectedAbogado?.rut ?? null, causa.abogado);
 
   const stripeColor =
     causa.semaforo === "rojo"
@@ -1087,7 +1133,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
         <TabInfo
           causa={causa}
           onOpenModal={handleOpenModal}
-          firmLawyerNombre={firmLawyer.nombre}
+          partes={partes}
           latestActuacion={actuacionesList[0]}
         />
       )}
