@@ -6,6 +6,7 @@ import { Avatar } from "@/components/primitives/Avatar";
 import { Card } from "@/components/primitives/Card";
 import { KPI } from "@/components/primitives/KPI";
 import { Btn } from "@/components/primitives/Btn";
+import { Skeleton } from "@/components/Skeleton";
 import { useCausas } from "@/hooks/useCausas";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 import type { Causa } from "@/data/types";
@@ -43,7 +44,7 @@ function ProgressBar({ value, status }: { value: number; status: SemaforoColor }
 
 /* ─── Semáforo cluster ─── */
 function SemaforoCluster() {
-  const { data: allCausas = [] } = useCausas();
+  const { data: allCausas = [], isLoading } = useCausas();
 
   const rojo           = allCausas.filter((c) => c.semaforo === "rojo").length;
   const amarillo       = allCausas.filter((c) => c.semaforo === "amarillo").length;
@@ -56,6 +57,28 @@ function SemaforoCluster() {
     { s: "amarillo", n: amarillo, t: "Atención", desc: "Acción esta semana" },
     { s: "verde",    n: verde,    t: "Al día",   desc: "Sin urgencia inmediata" },
   ];
+
+  if (isLoading) {
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+        {(["rojo", "amarillo", "verde"] as SemaforoColor[]).map((s) => (
+          <Card key={s} pad={20} elevated style={{ display: "flex", flexDirection: "column", gap: 12, overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Skeleton width={38} height={38} radius={19} />
+              <Skeleton width={80} height={12} />
+            </div>
+            <Skeleton width={64} height={44} radius={8} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              <Skeleton width="55%" height={16} />
+              <Skeleton width="85%" height={12} />
+            </div>
+            <Skeleton width="100%" height={4} radius={4} />
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
@@ -158,10 +181,20 @@ function DayPill({ date, status }: { date: string; status: SemaforoValue }) {
   );
 }
 
+/* ─── Skeleton row helpers ─── */
+const SKEL_ROW_STYLE: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "auto 1fr auto",
+  gap: 14,
+  padding: "14px 20px",
+  alignItems: "center",
+};
+
 /* ─── Próximos plazos ─── */
-function ProximosPlazosWidget({ plazos, onViewAll }: {
+function ProximosPlazosWidget({ plazos, onViewAll, isLoading }: {
   plazos: Causa[];
   onViewAll: () => void;
+  isLoading: boolean;
 }) {
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
@@ -180,63 +213,81 @@ function ProximosPlazosWidget({ plazos, onViewAll }: {
         <Btn size="sm" kind="ghost" onClick={onViewAll}>Ver todos</Btn>
       </div>
       <div>
-        {plazos.map((causa, i) => {
-          const dias = calcDiasRestantes(causa.next_deadline_at!);
-          const vencido = dias < 0;
-          return (
-            <div key={causa.id} style={{
-              display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14,
-              padding: "14px 20px",
-              borderBottom: i === plazos.length - 1 ? 0 : "1px solid var(--fj-line)",
-              alignItems: "center",
-            }}>
-              <DayPill date={causa.next_deadline_at!} status={causa.semaforo} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{
-                  fontFamily: "var(--fj-body)", fontSize: 13.5, color: "var(--fj-ink)",
-                  fontWeight: 500, marginBottom: 3,
-                }}>
-                  {estadoLabelDash(causa.procedural_state)}
+        {isLoading
+          ? Array.from({ length: 4 }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  ...SKEL_ROW_STYLE,
+                  borderBottom: i === 3 ? undefined : "1px solid var(--fj-line)",
+                }}
+              >
+                <Skeleton width={48} height={52} radius={8} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Skeleton width="72%" height={13} />
+                  <Skeleton width="48%" height={11} />
                 </div>
-                <div style={{
-                  display: "flex", gap: 8, alignItems: "center",
-                  fontFamily: "var(--fj-body)", fontSize: 11.5, color: "var(--fj-ink3)",
-                }}>
-                  <span style={{ fontFamily: "var(--fj-mono)", color: "var(--fj-ink2)", whiteSpace: "nowrap" }}>
-                    {causa.rol}
-                  </span>
-                  <span>·</span>
-                  <span style={{
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 280,
-                  }}>
-                    {causa.caratula}
-                  </span>
-                </div>
+                <Skeleton width={52} height={12} />
               </div>
-              <span style={{
-                fontFamily: "var(--fj-body)", fontSize: 12, fontWeight: 600,
-                color: vencido ? "var(--fj-rojo)"
-                     : causa.semaforo === "amarillo" ? "var(--fj-amarillo)"
-                     : "var(--fj-ink2)",
-                fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
-              }}>
-                {vencido ? `${Math.abs(dias)}d atraso`
-                 : dias === 0 ? "Hoy"
-                 : dias === 1 ? "Mañana"
-                 : `en ${dias}d`}
-              </span>
-            </div>
-          );
-        })}
+            ))
+          : plazos.map((causa, i) => {
+              const dias = calcDiasRestantes(causa.next_deadline_at!);
+              const vencido = dias < 0;
+              return (
+                <div key={causa.id} style={{
+                  display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14,
+                  padding: "14px 20px",
+                  borderBottom: i === plazos.length - 1 ? undefined : "1px solid var(--fj-line)",
+                  alignItems: "center",
+                }}>
+                  <DayPill date={causa.next_deadline_at!} status={causa.semaforo} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: "var(--fj-body)", fontSize: 13.5, color: "var(--fj-ink)",
+                      fontWeight: 500, marginBottom: 3,
+                    }}>
+                      {estadoLabelDash(causa.procedural_state)}
+                    </div>
+                    <div style={{
+                      display: "flex", gap: 8, alignItems: "center",
+                      fontFamily: "var(--fj-body)", fontSize: 11.5, color: "var(--fj-ink3)",
+                    }}>
+                      <span style={{ fontFamily: "var(--fj-mono)", color: "var(--fj-ink2)", whiteSpace: "nowrap" }}>
+                        {causa.rol}
+                      </span>
+                      <span>·</span>
+                      <span style={{
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 280,
+                      }}>
+                        {causa.caratula}
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{
+                    fontFamily: "var(--fj-body)", fontSize: 12, fontWeight: 600,
+                    color: vencido ? "var(--fj-rojo)"
+                         : causa.semaforo === "amarillo" ? "var(--fj-amarillo)"
+                         : "var(--fj-ink2)",
+                    fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
+                  }}>
+                    {vencido ? `${Math.abs(dias)}d atraso`
+                     : dias === 0 ? "Hoy"
+                     : dias === 1 ? "Mañana"
+                     : `en ${dias}d`}
+                  </span>
+                </div>
+              );
+            })}
       </div>
     </Card>
   );
 }
 
 /* ─── Actividad reciente ─── */
-function ActividadReciente({ causas, onViewCausa }: {
+function ActividadReciente({ causas, onViewCausa, isLoading }: {
   causas: Causa[];
   onViewCausa: (id: string) => void;
+  isLoading: boolean;
 }) {
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
@@ -249,83 +300,113 @@ function ActividadReciente({ causas, onViewCausa }: {
         </div>
       </div>
       <div>
-        {causas.map((c, i) => (
-          <button
-            key={c.id}
-            onClick={() => onViewCausa(c.id)}
-            style={{
-              width: "100%", textAlign: "left", border: 0, background: "transparent", cursor: "pointer",
-              display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14,
-              padding: "14px 20px",
-              borderBottom: i === causas.length - 1 ? 0 : "1px solid var(--fj-line)",
-              alignItems: "center",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--fj-panel2)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
-            <Avatar iniciales={c.abogado.iniciales} color={c.abogado.color} nombre={c.abogado.nombre} size={32} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                <span style={{ fontFamily: "var(--fj-mono)", fontSize: 11.5, color: "var(--fj-ink3)", whiteSpace: "nowrap" }}>
-                  {c.rol}
+        {isLoading
+          ? Array.from({ length: 4 }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  ...SKEL_ROW_STYLE,
+                  borderBottom: i === 3 ? undefined : "1px solid var(--fj-line)",
+                }}
+              >
+                <Skeleton width={32} height={32} radius={16} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Skeleton width="38%" height={11} />
+                  <Skeleton width="72%" height={13} />
+                </div>
+                <Skeleton width={40} height={11} />
+              </div>
+            ))
+          : causas.map((c, i) => (
+              <button
+                key={c.id}
+                onClick={() => onViewCausa(c.id)}
+                style={{
+                  width: "100%", textAlign: "left", border: 0, background: "transparent", cursor: "pointer",
+                  display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14,
+                  padding: "14px 20px",
+                  borderBottom: i === causas.length - 1 ? undefined : "1px solid var(--fj-line)",
+                  alignItems: "center",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--fj-panel2)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                <Avatar iniciales={c.abogado.iniciales} color={c.abogado.color} nombre={c.abogado.nombre} size={32} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                    <span style={{ fontFamily: "var(--fj-mono)", fontSize: 11.5, color: "var(--fj-ink3)", whiteSpace: "nowrap" }}>
+                      {c.rol}
+                    </span>
+                    <SemaforoRing status={c.semaforo} size={14} variant="dot" />
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink)", fontWeight: 500,
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>
+                    {c.caratula}
+                  </div>
+                </div>
+                <span style={{ fontFamily: "var(--fj-body)", fontSize: 11.5, color: "var(--fj-ink3)", whiteSpace: "nowrap" }}>
+                  hace {c.diasUltima}d
                 </span>
-                <SemaforoRing status={c.semaforo} size={14} variant="dot" />
-              </div>
-              <div style={{
-                fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink)", fontWeight: 500,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>
-                {c.caratula}
-              </div>
-            </div>
-            <span style={{ fontFamily: "var(--fj-body)", fontSize: 11.5, color: "var(--fj-ink3)", whiteSpace: "nowrap" }}>
-              hace {c.diasUltima}d
-            </span>
-          </button>
-        ))}
+              </button>
+            ))}
       </div>
     </Card>
   );
 }
 
 /* ─── Dashboard default layout ─── */
-function DashboardDefault({ plazos, recientes, onViewCausa, onViewPlazos }: {
+function DashboardDefault({ plazos, recientes, onViewCausa, onViewPlazos, isLoading }: {
   plazos: Causa[];
   recientes: Causa[];
   onViewCausa: (id: string) => void;
   onViewPlazos: () => void;
+  isLoading: boolean;
 }) {
   return (
     <>
       <SemaforoCluster />
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20, marginTop: 24 }}>
-        <ProximosPlazosWidget plazos={plazos} onViewAll={onViewPlazos} />
-        <ActividadReciente causas={recientes} onViewCausa={onViewCausa} />
+        <ProximosPlazosWidget plazos={plazos} onViewAll={onViewPlazos} isLoading={isLoading} />
+        <ActividadReciente causas={recientes} onViewCausa={onViewCausa} isLoading={isLoading} />
       </div>
     </>
   );
 }
 
 /* ─── KPI row ─── */
-function KPIRow({ causasCount, urgentes, rojoCount }: { causasCount: number; urgentes: number; rojoCount: number }) {
+function KPIRow({ causasCount, urgentes, rojoCount, isLoading }: {
+  causasCount: number;
+  urgentes: number;
+  rojoCount: number;
+  isLoading: boolean;
+}) {
   return (
     <Card pad={20} style={{ marginBottom: 24 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }}>
-        <KPI
-          label="Causas activas"
-          value={causasCount}
-          sub="En seguimiento"
-        />
-        <KPI
-          label="Plazos urgentes"
-          value={urgentes}
-          sub="Próximos y vencidos"
-        />
-        <KPI
-          label="Estado crítico"
-          value={rojoCount}
-          sub="Causas con semáforo rojo"
-        />
+        {isLoading ? (
+          <>
+            {(["Causas activas", "Plazos urgentes", "Estado crítico"] as const).map((label) => (
+              <div key={label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{
+                  fontFamily: "var(--fj-body)", fontSize: 11, fontWeight: 600,
+                  textTransform: "uppercase", letterSpacing: ".12em", color: "var(--fj-ink3)",
+                }}>
+                  {label}
+                </div>
+                <Skeleton width={72} height={36} radius={8} />
+                <Skeleton width="60%" height={12} />
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <KPI label="Causas activas" value={causasCount} sub="En seguimiento" />
+            <KPI label="Plazos urgentes" value={urgentes} sub="Próximos y vencidos" />
+            <KPI label="Estado crítico" value={rojoCount} sub="Causas con semáforo rojo" />
+          </>
+        )}
       </div>
     </Card>
   );
@@ -341,7 +422,7 @@ function fmtDashboardDate(d: Date): string {
 
 /* ─── Main Dashboard component ─── */
 export function Dashboard() {
-  const { data: causas = [] } = useCausas();
+  const { data: causas = [], isLoading } = useCausas();
   const navigate = useNavigate();
   const { abogado } = useSelectedLawyer();
   const firstName = abogado ? abogado.nombre.split(/\s+/)[0] ?? "—" : "—";
@@ -388,14 +469,20 @@ export function Dashboard() {
         <div>
           <div style={kickerCss}>{todayLabel}</div>
           <h1 style={pageTitleCss}>{saludo}, {firstName}.</h1>
-          <p style={{
-            margin: "6px 0 0", fontFamily: "var(--fj-body)", fontSize: 14,
-            color: "var(--fj-ink3)", maxWidth: 580,
-          }}>
-            Tienes{" "}
-            <strong style={{ color: "var(--fj-rojo)" }}>{urgentes} plazos</strong>{" "}
-            que requieren tu atención esta semana y {rojoCount} causa{rojoCount === 1 ? "" : "s"} en estado crítico.
-          </p>
+          {isLoading ? (
+            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 5 }}>
+              <Skeleton width={340} height={14} />
+            </div>
+          ) : (
+            <p style={{
+              margin: "6px 0 0", fontFamily: "var(--fj-body)", fontSize: 14,
+              color: "var(--fj-ink3)", maxWidth: 580,
+            }}>
+              Tienes{" "}
+              <strong style={{ color: "var(--fj-rojo)" }}>{urgentes} plazos</strong>{" "}
+              que requieren tu atención esta semana y {rojoCount} causa{rojoCount === 1 ? "" : "s"} en estado crítico.
+            </p>
+          )}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <Btn icon={<Search size={15} strokeWidth={1.6} />} kind="secondary">Buscar causa</Btn>
@@ -405,7 +492,7 @@ export function Dashboard() {
       </div>
 
       {/* KPI row */}
-      <KPIRow causasCount={causas.length} urgentes={urgentes} rojoCount={rojoCount} />
+      <KPIRow causasCount={causas.length} urgentes={urgentes} rojoCount={rojoCount} isLoading={isLoading} />
 
       {/* Default layout */}
       <DashboardDefault
@@ -413,6 +500,7 @@ export function Dashboard() {
         recientes={recientes}
         onViewCausa={(id) => navigate(`/causas/${id}`)}
         onViewPlazos={() => navigate("/plazos")}
+        isLoading={isLoading}
       />
     </div>
   );
