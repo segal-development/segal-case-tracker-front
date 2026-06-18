@@ -1,18 +1,13 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw, Search, Plus } from "lucide-react";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Card } from "@/components/primitives/Card";
 import { KPI } from "@/components/primitives/KPI";
 import { Btn } from "@/components/primitives/Btn";
 import { useCausas } from "@/hooks/useCausas";
-import { useTrends } from "@/hooks/useTrends";
-import { useTokenColors } from "@/hooks/useTokenColors";
-import { fmtCLP } from "@/lib/format";
+import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 import type { Causa } from "@/data/types";
 import type { SemaforoColor, SemaforoValue } from "@/data/types";
 
@@ -293,112 +288,6 @@ function ActividadReciente({ causas, onViewCausa }: {
   );
 }
 
-/* ─── Legend item ─── */
-function Legend({ swatch, label, value }: { swatch: string; label: string; value: number }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <span style={{ width: 8, height: 8, background: swatch, borderRadius: 2 }} />
-      <span style={{ fontFamily: "var(--fj-body)", fontSize: 12, color: "var(--fj-ink2)" }}>{label}</span>
-      <span style={{ fontFamily: "var(--fj-heading)", fontSize: 14, color: "var(--fj-ink)", fontVariantNumeric: "tabular-nums" }}>{value}</span>
-    </div>
-  );
-}
-
-/* ─── Trends chart ─── */
-function TrendsChart() {
-  const { data: trend = [] } = useTrends();
-  const colors = useTokenColors();
-
-  const totalNuevas    = trend.reduce((a, d) => a + d.causasNuevas, 0);
-  const totalCumplidos = trend.reduce((a, d) => a + d.plazosCumplidos, 0);
-
-  const tickFormatter = (v: string) => {
-    const d = new Date(v + "T12:00:00");
-    return d.toLocaleDateString("es-CL", { day: "2-digit", month: "short" }).replace(".", "");
-  };
-
-  return (
-    <Card pad={20}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-        <div>
-          <div style={{ fontFamily: "var(--fj-heading)", fontSize: 17, fontWeight: 500, color: "var(--fj-ink)" }}>
-            Movimiento últimos 30 días
-          </div>
-          <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-            <Legend swatch={colors.primary} label="Causas nuevas"    value={totalNuevas} />
-            <Legend swatch={colors.verde}   label="Plazos cumplidos" value={totalCumplidos} />
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          {["7d", "30d", "90d"].map((p) => (
-            <button key={p} style={{
-              padding: "5px 10px", borderRadius: 6, border: "1px solid var(--fj-line)",
-              background: p === "30d" ? "var(--fj-primary-soft)" : "transparent",
-              color: p === "30d" ? "var(--fj-primary)" : "var(--fj-ink3)",
-              fontFamily: "var(--fj-body)", fontSize: 11.5, fontWeight: 500, cursor: "pointer",
-            }}>{p}</button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ height: 180, width: "100%" }}>
-        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <LineChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid
-              strokeDasharray="2 4"
-              stroke={colors.line}
-              vertical={false}
-            />
-            <XAxis
-              dataKey="fecha"
-              tickFormatter={tickFormatter}
-              tick={{ fontFamily: "var(--fj-body)", fontSize: 10, fill: colors.ink3 }}
-              axisLine={false}
-              tickLine={false}
-              interval={4}
-            />
-            <YAxis
-              tick={{ fontFamily: "var(--fj-body)", fontSize: 10, fill: colors.ink3 }}
-              axisLine={false}
-              tickLine={false}
-              width={24}
-            />
-            <Tooltip
-              contentStyle={{
-                fontFamily: "var(--fj-body)", fontSize: 12,
-                background: "var(--fj-panel)", border: "1px solid var(--fj-line)",
-                borderRadius: 8,
-              }}
-              labelFormatter={(label) => tickFormatter(String(label ?? ""))}
-            />
-            <Line
-              type="monotone"
-              dataKey="causasNuevas"
-              name="Causas nuevas"
-              stroke={colors.primary}
-              strokeWidth={1.8}
-              dot={false}
-              activeDot={{ r: 4 }}
-              strokeLinecap="round"
-            />
-            <Line
-              type="monotone"
-              dataKey="plazosCumplidos"
-              name="Plazos cumplidos"
-              stroke={colors.verde}
-              strokeWidth={1.8}
-              strokeDasharray="3 3"
-              dot={false}
-              activeDot={{ r: 4 }}
-              strokeLinecap="round"
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </Card>
-  );
-}
-
 /* ─── Dashboard default layout ─── */
 function DashboardDefault({ plazos, recientes, onViewCausa, onViewPlazos }: {
   plazos: Causa[];
@@ -413,19 +302,15 @@ function DashboardDefault({ plazos, recientes, onViewCausa, onViewPlazos }: {
         <ProximosPlazosWidget plazos={plazos} onViewAll={onViewPlazos} />
         <ActividadReciente causas={recientes} onViewCausa={onViewCausa} />
       </div>
-      <div style={{ marginTop: 20 }}>
-        <TrendsChart />
-      </div>
     </>
   );
 }
 
 /* ─── KPI row ─── */
 function KPIRow({ causasCount, urgentes, rojoCount }: { causasCount: number; urgentes: number; rojoCount: number }) {
-  const financiero = CAUSAS_RIESGO_TOTAL;
   return (
     <Card pad={20} style={{ marginBottom: 24 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }}>
         <KPI
           label="Causas activas"
           value={causasCount}
@@ -441,24 +326,26 @@ function KPIRow({ causasCount, urgentes, rojoCount }: { causasCount: number; urg
           value={rojoCount}
           sub="Causas con semáforo rojo"
         />
-        <KPI
-          label="Cuantía en riesgo"
-          value={fmtCLP(financiero)}
-          sub="Causas rojo + amarillo"
-        />
       </div>
     </Card>
   );
 }
 
-// Precomputed: sum of cuantia for non-verde causas
-import { FINANCIERO } from "@/data/mock";
-const CAUSAS_RIESGO_TOTAL = FINANCIERO.cuantiaRiesgo;
+function fmtDashboardDate(d: Date): string {
+  const weekday = d.toLocaleDateString("es-CL", { weekday: "long" });
+  const day = d.getDate();
+  const month = d.toLocaleDateString("es-CL", { month: "short" }).replace(".", "");
+  const year = d.getFullYear();
+  return `${weekday} · ${day} ${month} ${year}`;
+}
 
 /* ─── Main Dashboard component ─── */
 export function Dashboard() {
   const { data: causas = [] } = useCausas();
   const navigate = useNavigate();
+  const { abogado } = useSelectedLawyer();
+  const firstName = abogado ? abogado.nombre.split(/\s+/)[0] ?? "—" : "—";
+  const todayLabel = fmtDashboardDate(new Date());
 
   const rojoCount = useMemo(() => causas.filter((c) => c.semaforo === "rojo").length, [causas]);
 
@@ -499,8 +386,8 @@ export function Dashboard() {
         marginBottom: 28, gap: 24,
       }}>
         <div>
-          <div style={kickerCss}>jueves · 15 may 2026</div>
-          <h1 style={pageTitleCss}>{saludo}, Catalina.</h1>
+          <div style={kickerCss}>{todayLabel}</div>
+          <h1 style={pageTitleCss}>{saludo}, {firstName}.</h1>
           <p style={{
             margin: "6px 0 0", fontFamily: "var(--fj-body)", fontSize: 14,
             color: "var(--fj-ink3)", maxWidth: 580,

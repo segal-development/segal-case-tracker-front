@@ -33,9 +33,9 @@ import { fetchBlob } from "@/lib/api";
 import pdfIcon from "@/assets/file-icons/pdf.png";
 import wordIcon from "@/assets/file-icons/word.jpg";
 import imageIcon from "@/assets/file-icons/image.png";
-import { PLAZOS, ABOGADOS } from "@/data/mock";
+import { useDeadlines } from "@/hooks/useDeadlines";
 import { fmtCLP, fmtDate } from "@/lib/format";
-import type { Causa, Plazo } from "@/data/types";
+import type { Actuacion, Causa, Plazo } from "@/data/types";
 
 /* ── page chrome ── */
 const pageCss: CSSProperties = {
@@ -190,9 +190,13 @@ function ParteCard({
 function TabInfo({
   causa,
   onOpenModal,
+  firmLawyerNombre,
+  latestActuacion,
 }: {
   causa: Causa;
   onOpenModal: (modal: string) => void;
+  firmLawyerNombre: string;
+  latestActuacion: Actuacion | undefined;
 }) {
   const parts = causa.caratula.split(" / ");
   const demandante = parts[0] ?? "—";
@@ -208,15 +212,8 @@ function TabInfo({
             items={[
               ["ROL", <span style={{ fontFamily: "var(--fj-mono)" }}>{causa.rol}</span>],
               ["RIT", <span style={{ fontFamily: "var(--fj-mono)" }}>{causa.rit ?? "—"}</span>],
-              [
-                "RUC",
-                <span style={{ fontFamily: "var(--fj-mono)" }}>
-                  {causa.rit ? "24-9-0123456-7" : "—"}
-                </span>,
-              ],
               ["Materia", causa.materia],
               ["Tribunal", causa.tribunal],
-              ["Cuantía", causa.cuantia ? fmtCLP(causa.cuantia) : "Sin cuantía declarada"],
             ]}
           />
         </Card>
@@ -224,7 +221,7 @@ function TabInfo({
         <Card pad={22}>
           <SubH>Partes</SubH>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <ParteCard rol="Demandante" nombre={demandante} rep="Catalina Morales R." />
+            <ParteCard rol="Demandante" nombre={demandante} rep={firmLawyerNombre} />
             <ParteCard
               rol="Demandado"
               nombre={adverso}
@@ -234,24 +231,6 @@ function TabInfo({
           </div>
         </Card>
 
-        <Card pad={22}>
-          <SubH>Notas internas</SubH>
-          <div
-            style={{
-              background: "var(--fj-panel2)",
-              border: "1px dashed var(--fj-line-strong)",
-              borderRadius: 8,
-              padding: 16,
-              fontFamily: "var(--fj-body)",
-              fontSize: 13.5,
-              color: "var(--fj-ink2)",
-              lineHeight: 1.55,
-            }}
-          >
-            Cliente solicita avanzar con embargo preventivo si no hay pago al 20/05. Coordinar con
-            receptor judicial. Antecedente bancario adjunto en documentos.
-          </div>
-        </Card>
       </div>
 
       {/* Right column */}
@@ -305,7 +284,7 @@ function TabInfo({
               Hace {causa.diasUltima} día{causa.diasUltima === 1 ? "" : "s"}
             </Pill>
             <p style={{ margin: 0, color: "var(--fj-ink)" }}>
-              <strong>Resolución:</strong> Téngase presente. Notifíquese.
+              {latestActuacion ? latestActuacion.titulo : "Sin actuaciones registradas."}
             </p>
             <p style={{ margin: "8px 0 0", color: "var(--fj-ink3)", fontSize: 12 }}>
               Registrada por el tribunal el {fmtDate(causa.ultimaActuacion)}.
@@ -313,42 +292,6 @@ function TabInfo({
           </div>
         </Card>
 
-        <Card pad={22}>
-          <SubH>Acceso</SubH>
-          <div style={{ display: "flex", marginTop: 4 }}>
-            {[ABOGADOS[0]!, ABOGADOS[2]!, ABOGADOS[5]!].map((a, i) => (
-              <span key={a.id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
-                <Avatar iniciales={a.iniciales} color={a.color} nombre={a.nombre} size={32} />
-              </span>
-            ))}
-            <button
-              style={{
-                marginLeft: -8,
-                width: 32,
-                height: 32,
-                borderRadius: 999,
-                background: "var(--fj-panel2)",
-                border: "2px solid var(--fj-panel)",
-                color: "var(--fj-ink2)",
-                fontFamily: "var(--fj-body)",
-                fontSize: 12,
-                cursor: "pointer",
-              }}
-            >
-              +2
-            </button>
-          </div>
-          <div
-            style={{
-              fontFamily: "var(--fj-body)",
-              fontSize: 12,
-              color: "var(--fj-ink3)",
-              marginTop: 10,
-            }}
-          >
-            5 personas con acceso · 3 con permisos de edición
-          </div>
-        </Card>
       </div>
     </div>
   );
@@ -368,7 +311,7 @@ function TabPlazos({
         pad={40}
         style={{ textAlign: "center", color: "var(--fj-ink3)", fontFamily: "var(--fj-body)" }}
       >
-        Esta causa no tiene plazos registrados.
+        Sin plazos activos.
       </Card>
     );
   }
@@ -882,6 +825,8 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
   // Hooks must run unconditionally — keep these ABOVE the early return below.
   const { data: docsList = [] } = useDocumentos(id);
   const { data: partes = [] } = usePartes(id);
+  const { data: causaPlazos = [] } = useDeadlines(id);
+  const { data: actuacionesList = [] } = useActuaciones(id);
 
   if (!causa) {
     return <Splash inline label="Cargando causa" />;
@@ -889,8 +834,6 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
 
   // Real firm lawyer = the litigante whose RUT matches the firm account.
   const firmLawyer = resolveFirmLawyer(partes, causa.abogado);
-
-  const causaPlazos = PLAZOS.filter((p) => p.causaId === causa.id);
 
   const stripeColor =
     causa.semaforo === "rojo"
@@ -1137,7 +1080,14 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
       </div>
 
       {/* Tab content */}
-      {tab === "info" && <TabInfo causa={causa} onOpenModal={handleOpenModal} />}
+      {tab === "info" && (
+        <TabInfo
+          causa={causa}
+          onOpenModal={handleOpenModal}
+          firmLawyerNombre={firmLawyer.nombre}
+          latestActuacion={actuacionesList[0]}
+        />
+      )}
       {tab === "plazos" && (
         <TabPlazos plazos={causaPlazos} onOpenModal={handleOpenModal} />
       )}

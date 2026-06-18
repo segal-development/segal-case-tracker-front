@@ -84,7 +84,7 @@ function computeSemaforo(diasHabilesRemaining: number): SemaforoColor {
 // Adapters
 // ---------------------------------------------------------------------------
 
-export function caseToCausa(c: CaseResponse): Causa {
+export function caseToCausa(c: CaseResponse, abogado?: Abogado): Causa {
   return {
     id: String(c.id),
     rol: c.rol,
@@ -92,7 +92,7 @@ export function caseToCausa(c: CaseResponse): Causa {
     caratula: `${c.plaintiff ?? '—'} / ${c.defendant ?? '—'}`,
     tribunal: c.court?.name ?? '—',
     materia: c.procedure ?? '—',
-    abogado: PLACEHOLDER_ABOGADO,
+    abogado: abogado ?? PLACEHOLDER_ABOGADO,
     semaforo: (c.semaforo as SemaforoValue) ?? null,
     fechaIngreso: c.filed_at,
     ultimaActuacion: c.last_movement_at,

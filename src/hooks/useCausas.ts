@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Causa } from "@/data/types";
+import type { Abogado, Causa } from "@/data/types";
 import { apiGet } from "@/lib/api";
 import { caseToCausa, type CaseResponse } from "@/lib/adapters";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
@@ -19,6 +19,18 @@ export function useCausas() {
   const { abogado } = useSelectedLawyer();
   const rut = abogado?.rut ?? null;
 
+  const derivedAbogado: Abogado | undefined = abogado
+    ? {
+        id: abogado.rut,
+        nombre: abogado.nombre,
+        iniciales: (() => {
+          const parts = abogado.nombre.split(/\s+/).filter(Boolean);
+          return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "SD";
+        })(),
+        color: "#6366f1",
+      }
+    : undefined;
+
   return useQuery<Causa[]>({
     queryKey: ["causas", rut],
     enabled: rut !== null,
@@ -35,7 +47,7 @@ export function useCausas() {
       const totalPages = Math.min(first.pages, MAX_PAGES);
 
       if (totalPages <= 1) {
-        return first.items.map(caseToCausa);
+        return first.items.map((item) => caseToCausa(item, derivedAbogado));
       }
 
       const rest = await Promise.all(
@@ -54,7 +66,7 @@ export function useCausas() {
         ...rest.flatMap((p) => p.items),
       ];
 
-      return allItems.map(caseToCausa);
+      return allItems.map((item) => caseToCausa(item, derivedAbogado));
     },
   });
 }
