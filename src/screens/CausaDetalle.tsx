@@ -125,7 +125,16 @@ function MetaItem({
         >
           {label}
         </div>
-        <div style={{ fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink)" }}>
+        <div
+          style={{
+            fontFamily: "var(--fj-body)",
+            fontSize: 13,
+            color: "var(--fj-ink)",
+            display: "flex",
+            alignItems: "center",
+            minHeight: 20,
+          }}
+        >
           {value}
         </div>
       </div>
