@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw, Search, Plus } from "lucide-react";
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
-import { Avatar } from "@/components/primitives/Avatar";
 import { Card } from "@/components/primitives/Card";
 import { KPI } from "@/components/primitives/KPI";
 import { Btn } from "@/components/primitives/Btn";
