@@ -63,7 +63,7 @@ function FilterSelect({
         <SelectTrigger className="w-full">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-[100]">
           {options.map(([v, t]) => (
             <SelectItem key={v} value={v}>{t}</SelectItem>
           ))}
@@ -87,7 +87,7 @@ function DateField({
           {date ? format(date, "dd/MM/yyyy") : <span className="text-muted-foreground">Elegir fecha</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="z-[100] w-auto p-0" align="start">
         <Calendar mode="single" selected={date} onSelect={onSelect} locale={es} autoFocus />
       </PopoverContent>
     </Popover>
