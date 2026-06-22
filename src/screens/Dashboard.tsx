@@ -298,84 +298,90 @@ function ProximosPlazosWidget({ plazos, onViewAll, isLoading }: {
   );
 }
 
-/* ─── Actividad reciente ─── */
-function ActividadReciente({ causas, onViewCausa, isLoading }: {
-  causas: Causa[];
-  onViewCausa: (id: string) => void;
+/* ─── Proyección de productividad ─── */
+function ProyeccionProductividad({ actual, proyeccion, isLoading }: {
+  actual: number;
+  proyeccion: number;
   isLoading: boolean;
 }) {
+  // Monthly target (meta). The firm's administrator will configure it later;
+  // until then we show the current pace + projection with an empty-target state.
+  const meta = null as number | null;
+  const pct = meta != null && meta > 0 ? Math.min(100, Math.round((proyeccion / meta) * 100)) : 0;
+  const onTrack = meta != null ? proyeccion >= meta : null;
+
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
       <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--fj-line)" }}>
         <div style={{ fontFamily: "var(--fj-heading)", fontSize: 17, fontWeight: 500, color: "var(--fj-ink)" }}>
-          Actividad reciente
+          Proyección de productividad
         </div>
         <div style={{ fontFamily: "var(--fj-body)", fontSize: 12, color: "var(--fj-ink3)", marginTop: 2 }}>
-          Causas con última actuación esta semana
+          Causas accionadas este mes vs meta
         </div>
       </div>
-      <div>
-        {isLoading
-          ? Array.from({ length: 4 }, (_, i) => (
-              <div
-                key={i}
-                style={{
-                  ...SKEL_ROW_STYLE,
-                  borderBottom: i === 3 ? undefined : "1px solid var(--fj-line)",
-                }}
-              >
-                <Skeleton width={32} height={32} radius={16} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <Skeleton width="38%" height={11} />
-                  <Skeleton width="72%" height={13} />
+      <div style={{ padding: 20 }}>
+        {isLoading ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Skeleton width="40%" height={40} />
+            <Skeleton width="70%" height={13} />
+            <Skeleton width="100%" height={8} />
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span style={{
+                fontFamily: "var(--fj-heading)", fontWeight: 500, fontSize: 44,
+                letterSpacing: "-.02em", color: "var(--fj-ink)", lineHeight: 1,
+                fontVariantNumeric: "tabular-nums",
+              }}>{actual}</span>
+              <span style={{ fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink3)" }}>
+                causas accionadas este mes
+              </span>
+            </div>
+
+            <div style={{ marginTop: 8, fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink2)" }}>
+              Proyección a fin de mes:{" "}
+              <strong style={{ color: "var(--fj-ink)", fontVariantNumeric: "tabular-nums" }}>{proyeccion}</strong>
+            </div>
+
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--fj-line)" }}>
+              {meta == null ? (
+                <div style={{ fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink3)" }}>
+                  Meta mensual: <strong style={{ color: "var(--fj-ink2)" }}>—</strong>{" "}
+                  · la administradora la configurará.
                 </div>
-                <Skeleton width={40} height={11} />
-              </div>
-            ))
-          : causas.map((c, i) => (
-              <button
-                key={c.id}
-                onClick={() => onViewCausa(c.id)}
-                style={{
-                  width: "100%", textAlign: "left", border: 0, background: "transparent", cursor: "pointer",
-                  display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14,
-                  padding: "14px 20px",
-                  borderBottom: i === causas.length - 1 ? undefined : "1px solid var(--fj-line)",
-                  alignItems: "center",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--fj-panel2)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-              >
-                <Avatar iniciales={c.abogado.iniciales} color={c.abogado.color} nombre={c.abogado.nombre} size={32} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                    <span style={{ fontFamily: "var(--fj-mono)", fontSize: 11.5, color: "var(--fj-ink3)", whiteSpace: "nowrap" }}>
-                      {c.rol}
+              ) : (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 6 }}>
+                    <span style={{ color: "var(--fj-ink3)" }}>
+                      Meta mensual: <strong style={{ color: "var(--fj-ink2)" }}>{meta}</strong>
                     </span>
-                    <SemaforoRing status={c.semaforo} size={14} variant="dot" />
+                    <span style={{ fontWeight: 600, color: onTrack ? "var(--fj-verde)" : "var(--fj-amarillo)" }}>
+                      {onTrack ? "En camino" : "Por debajo"} · {pct}%
+                    </span>
                   </div>
-                  <div style={{
-                    fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink)", fontWeight: 500,
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  }}>
-                    {c.caratula}
+                  <div style={{ height: 8, background: "var(--fj-panel2)", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{
+                      width: `${pct}%`, height: "100%", borderRadius: 4,
+                      background: onTrack ? "var(--fj-verde)" : "var(--fj-amarillo)",
+                    }} />
                   </div>
-                </div>
-                <span style={{ fontFamily: "var(--fj-body)", fontSize: 11.5, color: "var(--fj-ink3)", whiteSpace: "nowrap" }}>
-                  hace {c.diasUltima}d
-                </span>
-              </button>
-            ))}
+                </>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </Card>
   );
 }
 
 /* ─── Dashboard default layout ─── */
-function DashboardDefault({ plazos, recientes, onViewCausa, onViewPlazos, isLoading }: {
+function DashboardDefault({ plazos, proyActual, proyEstimada, onViewPlazos, isLoading }: {
   plazos: Causa[];
-  recientes: Causa[];
-  onViewCausa: (id: string) => void;
+  proyActual: number;
+  proyEstimada: number;
   onViewPlazos: () => void;
   isLoading: boolean;
 }) {
@@ -384,7 +390,7 @@ function DashboardDefault({ plazos, recientes, onViewCausa, onViewPlazos, isLoad
       <SemaforoCluster />
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20, marginTop: 24 }}>
         <ProximosPlazosWidget plazos={plazos} onViewAll={onViewPlazos} isLoading={isLoading} />
-        <ActividadReciente causas={recientes} onViewCausa={onViewCausa} isLoading={isLoading} />
+        <ProyeccionProductividad actual={proyActual} proyeccion={proyEstimada} isLoading={isLoading} />
       </div>
     </>
   );
@@ -467,9 +473,18 @@ export function Dashboard() {
     [causas],
   );
 
-  const recientes = [...causas]
-    .sort((a, b) => a.diasUltima - b.diasUltima)
-    .slice(0, 4);
+  // Productivity projection: cases actioned this calendar month, linearly
+  // projected to month-end. Compared against the admin-configured meta (later).
+  const now = new Date();
+  const actividadMes = causas.filter((c) => {
+    if (!c.ultimaActuacion) return false;
+    const d = new Date(c.ultimaActuacion);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
+  const _domToday = now.getDate();
+  const _daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const proyeccionMes =
+    _domToday > 0 ? Math.round((actividadMes / _domToday) * _daysInMonth) : actividadMes;
 
   const hr = new Date().getHours();
   const saludo = hr < 12 ? "Buenos días" : hr < 19 ? "Buenas tardes" : "Buenas noches";
@@ -512,8 +527,8 @@ export function Dashboard() {
       {/* Default layout */}
       <DashboardDefault
         plazos={proximosPlazos}
-        recientes={recientes}
-        onViewCausa={(id) => navigate(`/causas/${id}`)}
+        proyActual={actividadMes}
+        proyEstimada={proyeccionMes}
         onViewPlazos={() => navigate("/plazos")}
         isLoading={isLoading}
       />
