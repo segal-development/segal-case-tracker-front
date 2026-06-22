@@ -83,7 +83,11 @@ function SemaforoCluster() {
     <>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
         {items.map((x) => (
-          <Card key={x.s} pad={20} elevated style={{ display: "flex", flexDirection: "column", gap: 12, overflow: "hidden" }}>
+          <Card key={x.s} pad={20} elevated style={{
+            display: "flex", flexDirection: "column", gap: 12, overflow: "hidden",
+            borderLeft: `4px solid ${x.s === "rojo" ? "var(--fj-rojo)" : x.s === "amarillo" ? "var(--fj-amarillo)" : "var(--fj-verde)"}`,
+            background: x.s === "rojo" ? "var(--fj-rojo-soft)" : x.s === "amarillo" ? "var(--fj-amarillo-soft)" : "var(--fj-verde-soft)",
+          }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <SemaforoRing status={x.s} size={38} />
               <span style={{
@@ -172,11 +176,22 @@ function DayPill({ date, status }: { date: string; status: SemaforoValue }) {
            : "var(--fj-verde)";
   return (
     <div style={{
-      width: 48, padding: "6px 6px", textAlign: "center", borderRadius: 8,
-      background: bg, color: fg, lineHeight: 1.05,
+      width: 48, borderRadius: 8, overflow: "hidden", textAlign: "center",
+      border: `1px solid ${fg}`, lineHeight: 1,
+      boxShadow: "0 1px 2px rgba(15,22,38,.08)",
     }}>
-      <div style={{ fontFamily: "var(--fj-heading)", fontSize: 18, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{dd}</div>
-      <div style={{ fontFamily: "var(--fj-body)", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".10em" }}>{mm}</div>
+      {/* Month header — colored strip, like a tear-off calendar page */}
+      <div style={{
+        background: fg, color: "#fff", fontFamily: "var(--fj-body)",
+        fontSize: 9.5, fontWeight: 700, textTransform: "uppercase",
+        letterSpacing: ".10em", padding: "2px 0",
+      }}>{mm}</div>
+      {/* Day number — light body */}
+      <div style={{
+        background: bg, color: "var(--fj-ink)", fontFamily: "var(--fj-heading)",
+        fontSize: 20, fontWeight: 600, fontVariantNumeric: "tabular-nums",
+        padding: "4px 0",
+      }}>{dd}</div>
     </div>
   );
 }
