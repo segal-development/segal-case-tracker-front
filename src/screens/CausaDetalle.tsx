@@ -906,7 +906,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
     causa.semaforo === "rojo" ? "Crítica"
     : causa.semaforo === "amarillo" ? "Atención"
     : causa.semaforo === "verde" ? "Al día"
-    : (causa.semaforo as string) === "gris" ? "Sin plazo accionable"
+    : String(causa.semaforo) === "gris" ? "Sin plazo accionable"
     : "Sin seguimiento";
 
   const handleOpenModal = (modal: string) => {
