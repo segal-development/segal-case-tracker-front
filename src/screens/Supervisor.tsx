@@ -39,6 +39,23 @@ const MATERIA_COLORS = [
   "#6a5a9b", "#9b5a6a",
 ];
 
+// Legal labels for the juicio-ejecutivo procedural stages (CPC · Ley 21.394).
+// Keys match the backend procedural_state / by_procedural_state stages.
+const STAGE_LABELS: Record<string, string> = {
+  mandamiento: "Mandamiento de ejecución",
+  notificado: "Notificado — plazo excepciones (art. 459)",
+  excepciones: "Excepciones opuestas (en traslado)",
+  traslado_ejecutante: "Traslado al ejecutante (art. 466)",
+  admisibilidad: "Admisibilidad de excepciones",
+  auto_prueba: "Término probatorio (art. 468)",
+  citacion_sentencia: "Citación a oír sentencia (art. 470)",
+  sentencia: "Sentencia — plazo apelación (art. 475)",
+  rebelde: "Rebeldía — sin oposición",
+  terminada: "Terminada",
+  indeterminate: "Sin plazo accionable (indeterminado)",
+  sin_clasificar: "Sin clasificar (sin detalle)",
+};
+
 // ─── DonutChart ───────────────────────────────────────────────────────────────
 
 function DonutChart({ sem, total }: { sem: FirmSemaforo; total: number }) {
@@ -494,6 +511,71 @@ export function Supervisor() {
                 </span>
               </div>
             ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Distribución por etapa procesal — flujo del juicio ejecutivo */}
+      {stats.totals.by_procedural_state.length > 0 && (
+        <Card pad={24} elevated>
+          <div
+            style={{
+              fontWeight: 600,
+              fontFamily: "var(--fj-heading)",
+              fontSize: 16,
+              marginBottom: 4,
+            }}
+          >
+            Distribución por etapa procesal
+          </div>
+          <div style={{ fontSize: 12, color: "var(--fj-ink3)", marginBottom: 20 }}>
+            Cartera a lo largo del flujo del juicio ejecutivo (CPC · Ley 21.394)
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {(() => {
+              const maxN = Math.max(
+                ...stats.totals.by_procedural_state.map((s) => s.count),
+                1,
+              );
+              return stats.totals.by_procedural_state.map((s) => (
+                <div
+                  key={s.stage}
+                  style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13 }}
+                >
+                  <span style={{ width: 240, color: "var(--fj-ink2)", flexShrink: 0 }}>
+                    {STAGE_LABELS[s.stage] ?? s.stage}
+                  </span>
+                  <div
+                    style={{
+                      flex: 1,
+                      height: 14,
+                      background: "var(--fj-panel2)",
+                      borderRadius: 7,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${(s.count / maxN) * 100}%`,
+                        height: "100%",
+                        background: "var(--fj-primary)",
+                        borderRadius: 7,
+                      }}
+                    />
+                  </div>
+                  <span
+                    style={{
+                      width: 40,
+                      textAlign: "right",
+                      fontWeight: 600,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {s.count}
+                  </span>
+                </div>
+              ));
+            })()}
           </div>
         </Card>
       )}

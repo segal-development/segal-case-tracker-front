@@ -13,6 +13,11 @@ export interface FirmMateriaItem {
   count: number;
 }
 
+export interface FirmStageItem {
+  stage: string;
+  count: number;
+}
+
 export interface FirmLawyerItem {
   rut: string;
   nombre: string;
@@ -30,6 +35,7 @@ export interface FirmStats {
     semaforo: FirmSemaforo;
     stale: number;
     by_materia: FirmMateriaItem[];
+    by_procedural_state: FirmStageItem[];
   };
   by_lawyer: FirmLawyerItem[];
 }
