@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useState, useEffect } from "react";
 import { Btn } from "@/components/primitives/Btn";
 import { Card } from "@/components/primitives/Card";
 import {
@@ -8,6 +9,7 @@ import {
   SettingsIcon,
 } from "@/components/primitives/icons";
 import { useAdminStats } from "@/hooks/useAdminStats";
+import { useGoals, useSetGoal } from "@/hooks/useGoals";
 import { fmtDate } from "@/lib/format";
 
 /* ─── Shared page styles ─── */
@@ -220,6 +222,12 @@ function fmtRelative(iso: string): string {
 /* ─── Admin dashboard ─── */
 export function Admin() {
   const { data, isLoading, error } = useAdminStats();
+  const { data: goals } = useGoals();
+  const setGoal = useSetGoal();
+  const [metaInput, setMetaInput] = useState("");
+  useEffect(() => {
+    if (goals?.monthly_productivity != null) setMetaInput(String(goals.monthly_productivity));
+  }, [goals?.monthly_productivity]);
 
   if (isLoading) {
     return (
@@ -318,6 +326,48 @@ export function Admin() {
           </Btn>
         </div>
       </div>
+
+      {/* Metas del estudio */}
+      <Card pad={0} style={{ marginBottom: 20, overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--fj-line)" }}>
+          <SubH2 noMargin>Metas del estudio</SubH2>
+        </div>
+        <div style={{ padding: "18px 20px", display: "flex", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+          <div>
+            <label style={{ display: "block", fontFamily: "var(--fj-body)", fontSize: 12, fontWeight: 600, color: "var(--fj-ink2)", marginBottom: 6 }}>
+              Meta mensual de productividad (causas accionadas)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={metaInput}
+              onChange={(e) => setMetaInput(e.target.value)}
+              placeholder="ej. 120"
+              style={{
+                height: 38, width: 160, padding: "0 12px", borderRadius: 8,
+                background: "var(--fj-panel)", border: "1px solid var(--fj-line-strong)",
+                fontFamily: "var(--fj-body)", fontSize: 14, color: "var(--fj-ink)", outline: "none",
+              }}
+            />
+          </div>
+          <Btn
+            kind="primary"
+            onClick={() => {
+              const v = Number(metaInput);
+              if (Number.isFinite(v) && v >= 0) {
+                setGoal.mutate({ key: "monthly_productivity", value: Math.round(v) });
+              }
+            }}
+          >
+            {setGoal.isPending ? "Guardando…" : "Guardar meta"}
+          </Btn>
+          {setGoal.isSuccess && <span style={{ fontSize: 13, color: "var(--fj-verde)" }}>✓ Guardada</span>}
+          {setGoal.isError && <span style={{ fontSize: 13, color: "var(--fj-rojo)" }}>Error al guardar</span>}
+        </div>
+        <div style={{ padding: "0 20px 16px", fontFamily: "var(--fj-body)", fontSize: 12, color: "var(--fj-ink3)" }}>
+          Se usa en el KPI de proyección de productividad del Dashboard (actual + proyección a fin de mes vs esta meta).
+        </div>
+      </Card>
 
       {/* Section A: Estado de sincronizacion */}
       <Card pad={0} style={{ marginBottom: 20, overflow: "hidden" }}>

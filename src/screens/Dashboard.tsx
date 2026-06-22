@@ -7,6 +7,7 @@ import { KPI } from "@/components/primitives/KPI";
 import { Btn } from "@/components/primitives/Btn";
 import { Skeleton } from "@/components/Skeleton";
 import { useCausas } from "@/hooks/useCausas";
+import { useGoals } from "@/hooks/useGoals";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 import type { Causa } from "@/data/types";
 import type { SemaforoColor, SemaforoValue } from "@/data/types";
@@ -306,14 +307,13 @@ function ProximosPlazosWidget({ plazos, onViewAll, isLoading }: {
 }
 
 /* ─── Proyección de productividad ─── */
-function ProyeccionProductividad({ actual, proyeccion, isLoading }: {
+function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
   actual: number;
   proyeccion: number;
+  meta: number | null;
   isLoading: boolean;
 }) {
-  // Monthly target (meta). The firm's administrator will configure it later;
-  // until then we show the current pace + projection with an empty-target state.
-  const meta = null as number | null;
+  // Monthly target (meta) is configured by the administrator (Admin → Metas).
   const pct = meta != null && meta > 0 ? Math.min(100, Math.round((proyeccion / meta) * 100)) : 0;
   const onTrack = meta != null ? proyeccion >= meta : null;
 
@@ -385,10 +385,11 @@ function ProyeccionProductividad({ actual, proyeccion, isLoading }: {
 }
 
 /* ─── Dashboard default layout ─── */
-function DashboardDefault({ plazos, proyActual, proyEstimada, onViewPlazos, isLoading }: {
+function DashboardDefault({ plazos, proyActual, proyEstimada, proyMeta, onViewPlazos, isLoading }: {
   plazos: Causa[];
   proyActual: number;
   proyEstimada: number;
+  proyMeta: number | null;
   onViewPlazos: () => void;
   isLoading: boolean;
 }) {
@@ -397,7 +398,7 @@ function DashboardDefault({ plazos, proyActual, proyEstimada, onViewPlazos, isLo
       <SemaforoCluster />
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20, marginTop: 24 }}>
         <ProximosPlazosWidget plazos={plazos} onViewAll={onViewPlazos} isLoading={isLoading} />
-        <ProyeccionProductividad actual={proyActual} proyeccion={proyEstimada} isLoading={isLoading} />
+        <ProyeccionProductividad actual={proyActual} proyeccion={proyEstimada} meta={proyMeta} isLoading={isLoading} />
       </div>
     </>
   );
@@ -451,6 +452,7 @@ function fmtDashboardDate(d: Date): string {
 /* ─── Main Dashboard component ─── */
 export function Dashboard() {
   const { data: causas = [], isLoading } = useCausas();
+  const { data: goals } = useGoals();
   const navigate = useNavigate();
   const { abogado } = useSelectedLawyer();
   const firstName = abogado ? abogado.nombre.split(/\s+/)[0] ?? "—" : "—";
@@ -539,6 +541,7 @@ export function Dashboard() {
         plazos={proximosPlazos}
         proyActual={actividadMes}
         proyEstimada={proyeccionMes}
+        proyMeta={goals?.monthly_productivity ?? null}
         onViewPlazos={() => navigate("/plazos")}
         isLoading={isLoading}
       />

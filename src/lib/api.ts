@@ -16,6 +16,17 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
   return res.json() as Promise<T>;
 }
 
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  if (!TOKEN) throw new Error('VITE_API_TOKEN is not set');
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText} — ${path}`);
+  return res.json() as Promise<T>;
+}
+
 /**
  * Fetch a protected binary resource (e.g. a PDF) WITH the auth header and return
  * a blob. `absolutePath` is a full API path (e.g. /api/v1/documents/123/download)
