@@ -987,6 +987,9 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
                 <SemaforoRing status={causa.semaforo} size={12} variant="dot" />
                 {semLabel}
               </Pill>
+              {causa.abandono_disponible && (
+                <Pill tone="primary">Abandono disponible</Pill>
+              )}
             </div>
             <h1
               style={{
