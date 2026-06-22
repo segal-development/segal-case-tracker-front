@@ -36,6 +36,8 @@ export interface Causa {
   /** Optional fields populated from the backend (undefined for mock-sourced data) */
   procedural_state?: string;
   next_deadline_at?: string | null;
+  /** Art. 152/153 CPC — case dormant long enough that the defense may request abandono. */
+  abandono_disponible?: boolean;
 }
 
 export interface Plazo {

@@ -238,6 +238,11 @@ function CausaRow({
 
       <td style={tdCss}>
         <Pill tone="neutral">{c.materia.split(" — ")[0]}</Pill>
+        {c.abandono_disponible && (
+          <Pill tone="primary" subtle style={{ marginTop: 4, fontSize: 10 }}>
+            Abandono disponible
+          </Pill>
+        )}
       </td>
 
       <td style={tdCss}>
