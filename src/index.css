@@ -6,7 +6,7 @@
   --color-primary: var(--fj-primary);
   --color-primary-soft: var(--fj-primary-soft);
   --color-primary-ink: var(--fj-primary-ink);
-  --color-accent: var(--fj-accent);
+  --color-accent: var(--accent);  /* shadcn: subtle hover/selected bg (app uses var(--fj-accent) inline directly) */
   --color-ink: var(--fj-ink);
   --color-ink2: var(--fj-ink2);
   --color-ink3: var(--fj-ink3);
@@ -21,6 +21,25 @@
   --color-amarillo-soft: var(--fj-amarillo-soft);
   --color-rojo: var(--fj-rojo);
   --color-rojo-soft: var(--fj-rojo-soft);
+
+  /* shadcn UI tokens → bridged to fj (values in :root) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
   /* Fonts */
   --font-heading: var(--fj-heading);
@@ -58,6 +77,26 @@
   --fj-amarillo-soft: #f5e9c8;
   --fj-rojo:          #c0392b;
   --fj-rojo-soft:     #f5dcd8;
+
+  /* shadcn value tokens → fj bridge (resolve per active theme via the fj vars) */
+  --background:            var(--fj-panel);
+  --foreground:            var(--fj-ink);
+  --card:                  var(--fj-panel);
+  --card-foreground:       var(--fj-ink);
+  --popover:               var(--fj-panel);
+  --popover-foreground:    var(--fj-ink);
+  --primary-foreground:    var(--fj-primary-ink);
+  --secondary:             var(--fj-panel2);
+  --secondary-foreground:  var(--fj-ink);
+  --accent:                var(--fj-panel2);
+  --accent-foreground:     var(--fj-ink);
+  --muted:                 var(--fj-panel2);
+  --muted-foreground:      var(--fj-ink3);
+  --destructive:           var(--fj-rojo);
+  --destructive-foreground:#ffffff;
+  --border:                var(--fj-line-strong);
+  --input:                 var(--fj-line-strong);
+  --ring:                  var(--fj-primary);
 
   /* Default font set (classic) */
   --fj-heading: "Source Serif 4", "Spectral", Georgia, serif;
