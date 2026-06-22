@@ -151,7 +151,7 @@ export function Header() {
   const { novedades, count, markAllSeen, isLoading } = useNovedades();
   const [notifOpen, setNotifOpen] = useState(false);
 
-  const badgeLabel = count > 9 ? "9+" : String(count);
+  const badgeLabel = count > 99 ? "99+" : String(count);
 
   return (
     <header style={{
@@ -205,7 +205,7 @@ export function Header() {
           {count > 0 && (
             <span style={{
               position: "absolute", top: 4, right: 3,
-              minWidth: count > 9 ? 18 : 14, height: 14, borderRadius: 999,
+              minWidth: count > 99 ? 22 : count > 9 ? 18 : 14, height: 14, borderRadius: 999,
               background: "var(--fj-rojo)", border: "1.5px solid var(--fj-panel)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontFamily: "var(--fj-mono)", fontSize: 9, color: "#fff",
