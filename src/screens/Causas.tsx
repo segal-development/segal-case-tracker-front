@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import type { CSSProperties, MouseEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Download, Plus, Search, X, User, LayoutList, LayoutGrid,
   MoreHorizontal, Check,
@@ -391,7 +391,8 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
-  const [sem, setSem] = useState("todas");
+  const [searchParams] = useSearchParams();
+  const [sem, setSem] = useState(searchParams.get("sem") ?? "todas");
   const [trib, setTrib] = useState("todos");
   const [mat, setMat] = useState("todas");
   const [page, setPage] = useState(1);

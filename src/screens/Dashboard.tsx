@@ -43,6 +43,7 @@ function ProgressBar({ value, status }: { value: number; status: SemaforoColor }
 
 /* ─── Semáforo cluster ─── */
 function SemaforoCluster() {
+  const navigate = useNavigate();
   const { data: allCausas = [], isLoading } = useCausas();
 
   const rojo           = allCausas.filter((c) => c.semaforo === "rojo").length;
@@ -82,7 +83,7 @@ function SemaforoCluster() {
     <>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
         {items.map((x) => (
-          <Card key={x.s} pad={20} elevated style={{
+          <Card key={x.s} pad={20} elevated onClick={() => navigate(`/causas?sem=${x.s}`)} style={{
             display: "flex", flexDirection: "column", gap: 12, overflow: "hidden",
             borderLeft: `4px solid ${x.s === "rojo" ? "var(--fj-rojo)" : x.s === "amarillo" ? "var(--fj-amarillo)" : "var(--fj-verde)"}`,
             background: x.s === "rojo" ? "var(--fj-rojo-soft)" : x.s === "amarillo" ? "var(--fj-amarillo-soft)" : "var(--fj-verde-soft)",
@@ -210,6 +211,7 @@ function ProximosPlazosWidget({ plazos, onViewAll, isLoading }: {
   onViewAll: () => void;
   isLoading: boolean;
 }) {
+  const navigate = useNavigate();
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
       <div style={{
@@ -248,12 +250,18 @@ function ProximosPlazosWidget({ plazos, onViewAll, isLoading }: {
               const dias = calcDiasRestantes(causa.next_deadline_at!);
               const vencido = dias < 0;
               return (
-                <div key={causa.id} style={{
-                  display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14,
-                  padding: "14px 20px",
-                  borderBottom: i === plazos.length - 1 ? undefined : "1px solid var(--fj-line)",
-                  alignItems: "center",
-                }}>
+                <div
+                  key={causa.id}
+                  onClick={() => navigate(`/causas/${causa.id}`)}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--fj-panel2)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  style={{
+                    display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14,
+                    padding: "14px 20px",
+                    borderBottom: i === plazos.length - 1 ? undefined : "1px solid var(--fj-line)",
+                    alignItems: "center", cursor: "pointer",
+                  }}
+                >
                   <DayPill date={causa.next_deadline_at!} status={causa.semaforo} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{
@@ -508,7 +516,10 @@ export function Dashboard() {
               color: "var(--fj-ink3)", maxWidth: 580,
             }}>
               Tienes{" "}
-              <strong style={{ color: "var(--fj-rojo)" }}>{urgentes} plazos</strong>{" "}
+              <strong
+                onClick={() => navigate("/plazos")}
+                style={{ color: "var(--fj-rojo)", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}
+              >{urgentes} plazos</strong>{" "}
               que requieren tu atención esta semana y {rojoCount} causa{rojoCount === 1 ? "" : "s"} en estado crítico.
             </p>
           )}
