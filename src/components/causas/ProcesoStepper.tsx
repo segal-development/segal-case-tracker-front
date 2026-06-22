@@ -39,10 +39,12 @@ export function ProcesoStepper({
   state,
   nextDeadlineAt,
   fatal,
+  apremio,
 }: {
   state?: string | null;
   nextDeadlineAt?: string | null;
   fatal?: boolean;
+  apremio?: boolean;
 }) {
   const idx = STEPS.findIndex((s) => s.key === state);
   const deadline = fmt(nextDeadlineAt);
@@ -159,6 +161,22 @@ export function ProcesoStepper({
       <div style={titleCss}>Etapa del procedimiento</div>
       <div style={subCss}>Flujo del juicio ejecutivo · CPC · Ley 21.394</div>
       {body}
+      {apremio && (
+        <div style={{
+          marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--fj-line)",
+          fontSize: 13, color: "var(--fj-ink2)", lineHeight: 1.5,
+        }}>
+          <span style={{
+            display: "inline-block", marginBottom: 6, fontSize: 10, fontWeight: 700,
+            letterSpacing: ".06em", color: "var(--fj-amarillo)",
+            background: "var(--fj-amarillo-soft)", borderRadius: 4, padding: "2px 7px",
+          }}>CUADERNO DE APREMIO</span>
+          <div>
+            La causa está en <strong>fase de ejecución</strong> (embargo / realización de bienes).
+            Revisá las actuaciones del cuaderno de apremio.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

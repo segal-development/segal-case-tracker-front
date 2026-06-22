@@ -991,6 +991,9 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
               {causa.abandono_disponible && (
                 <Pill tone="primary">Abandono disponible</Pill>
               )}
+              {causa.en_apremio && (
+                <Pill tone="amarillo">En apremio</Pill>
+              )}
             </div>
             <h1
               style={{
@@ -1085,6 +1088,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
           state={causa.procedural_state}
           nextDeadlineAt={causa.next_deadline_at}
           fatal={causa.next_deadline_fatal}
+          apremio={causa.en_apremio}
         />
       </Card>
 

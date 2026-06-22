@@ -40,6 +40,8 @@ export interface Causa {
   abandono_disponible?: boolean;
   /** True when the case's next actionable deadline is fatal (irreversible — e.g. excepciones, apelación). */
   next_deadline_fatal?: boolean;
+  /** True when the case reached the cuaderno de apremio (enforcement: embargo, remate). */
+  en_apremio?: boolean;
 }
 
 export interface Plazo {

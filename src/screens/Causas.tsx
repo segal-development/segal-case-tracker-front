@@ -243,6 +243,11 @@ function CausaRow({
             Abandono disponible
           </Pill>
         )}
+        {c.en_apremio && (
+          <Pill tone="amarillo" subtle style={{ marginTop: 4, fontSize: 10 }}>
+            En apremio
+          </Pill>
+        )}
       </td>
 
       <td style={tdCss}>
@@ -404,6 +409,7 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
     verde:          allCausas.filter((c) => c.semaforo === "verde").length,
     sinSeguimiento: allCausas.filter((c) => c.semaforo === null).length,
     abandono:       allCausas.filter((c) => c.abandono_disponible).length,
+    apremio:        allCausas.filter((c) => c.en_apremio).length,
     total:          allCausas.length,
   }), [allCausas]);
 
@@ -414,6 +420,8 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
           if (c.semaforo !== null) return false;
         } else if (sem === "abandono") {
           if (!c.abandono_disponible) return false;
+        } else if (sem === "apremio") {
+          if (!c.en_apremio) return false;
         } else if (c.semaforo !== (sem as SemaforoColor)) return false;
       }
       if (trib !== "todos" && c.tribunal !== trib) return false;
@@ -499,6 +507,10 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
         <SemChip
           label="Abandono disponible" n={semCount.abandono}
           active={sem === "abandono"} onClick={() => setSem("abandono")}
+        />
+        <SemChip
+          label="En apremio" n={semCount.apremio}
+          active={sem === "apremio"} onClick={() => setSem("apremio")}
         />
       </div>
 
