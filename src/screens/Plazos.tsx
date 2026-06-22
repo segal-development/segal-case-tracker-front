@@ -382,6 +382,24 @@ function PlazosLista({ causas }: { causas: Causa[] }) {
                     >
                       {estadoLabel(causa.procedural_state)}
                     </div>
+                    {causa.next_deadline_fatal && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: ".06em",
+                          color: "#fff",
+                          background: "var(--fj-rojo)",
+                          borderRadius: 4,
+                          padding: "1px 6px",
+                          marginBottom: 4,
+                        }}
+                        title="Plazo fatal: vencerlo es irreversible (art. 459 / 475 CPC)"
+                      >
+                        PLAZO FATAL
+                      </span>
+                    )}
                     <div
                       style={{
                         display: "flex",
@@ -580,6 +598,24 @@ function PlazosCalendario({ causas }: { causas: Causa[] }) {
                     >
                       {estadoLabel(causa.procedural_state)}
                     </div>
+                    {causa.next_deadline_fatal && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: ".06em",
+                          color: "#fff",
+                          background: "var(--fj-rojo)",
+                          borderRadius: 4,
+                          padding: "1px 6px",
+                          marginBottom: 4,
+                        }}
+                        title="Plazo fatal: vencerlo es irreversible (art. 459 / 475 CPC)"
+                      >
+                        PLAZO FATAL
+                      </span>
+                    )}
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <code
                         style={{

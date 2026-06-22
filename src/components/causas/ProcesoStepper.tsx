@@ -38,9 +38,11 @@ const noteCss: CSSProperties = {
 export function ProcesoStepper({
   state,
   nextDeadlineAt,
+  fatal,
 }: {
   state?: string | null;
   nextDeadlineAt?: string | null;
+  fatal?: boolean;
 }) {
   const idx = STEPS.findIndex((s) => s.key === state);
   const deadline = fmt(nextDeadlineAt);
@@ -120,6 +122,23 @@ export function ProcesoStepper({
                 {current && deadline && (
                   <div style={{ fontSize: 12, color: "var(--fj-primary)", marginTop: 2 }}>
                     Próximo plazo: {deadline}
+                    {fatal && (
+                      <span
+                        style={{
+                          marginLeft: 8,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: ".06em",
+                          color: "#fff",
+                          background: "var(--fj-rojo)",
+                          borderRadius: 4,
+                          padding: "1px 6px",
+                        }}
+                        title="Plazo fatal: vencerlo es irreversible (art. 459 / 475 CPC)"
+                      >
+                        PLAZO FATAL
+                      </span>
+                    )}
                   </div>
                 )}
                 {current && (

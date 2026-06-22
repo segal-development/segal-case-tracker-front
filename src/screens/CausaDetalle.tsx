@@ -1084,6 +1084,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
         <ProcesoStepper
           state={causa.procedural_state}
           nextDeadlineAt={causa.next_deadline_at}
+          fatal={causa.next_deadline_fatal}
         />
       </Card>
 
