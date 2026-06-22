@@ -21,6 +21,7 @@ import {
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Card } from "@/components/primitives/Card";
+import { ProcesoStepper } from "@/components/causas/ProcesoStepper";
 import { Btn } from "@/components/primitives/Btn";
 import { Pill } from "@/components/primitives/Pill";
 import { useCausa } from "@/hooks/useCausa";
@@ -1076,6 +1077,14 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
             </div>
           </div>
         </div>
+      </Card>
+
+      {/* Procedural stage stepper — where the case sits in the juicio ejecutivo */}
+      <Card pad={22} style={{ marginBottom: 20 }}>
+        <ProcesoStepper
+          state={causa.procedural_state}
+          nextDeadlineAt={causa.next_deadline_at}
+        />
       </Card>
 
       {/* Tab bar */}
