@@ -1,6 +1,6 @@
 import { Flag } from "lucide-react";
 
-export type SemaforoStatus = "rojo" | "amarillo" | "verde" | null;
+export type SemaforoStatus = "rojo" | "amarillo" | "verde" | "gris" | null;
 export type SemaforoVariant = "ring" | "dot" | "bar" | "flag";
 
 interface SemaforoRingProps {
@@ -14,6 +14,10 @@ const STATUS_MAP = {
   rojo:     { color: "var(--fj-rojo)",     soft: "var(--fj-rojo-soft)",     arc: 0.20, txt: "Crítico" },
   amarillo: { color: "var(--fj-amarillo)", soft: "var(--fj-amarillo-soft)", arc: 0.55, txt: "Atención" },
   verde:    { color: "var(--fj-verde)",    soft: "var(--fj-verde-soft)",    arc: 0.92, txt: "Al día" },
+  // Indeterminate (backend "gris"): case IS tracked but no actionable deadline
+  // could be determined from its movements. Solid gray center dot (arc 0) so it
+  // reads as a defined state, not a broken/empty ring.
+  gris:     { color: "var(--fj-ink3)",     soft: "var(--fj-line)",          arc: 0,    txt: "Sin plazo accionable" },
 } as const;
 
 /** Neutral config used when status is null — "sin seguimiento de plazos". */
