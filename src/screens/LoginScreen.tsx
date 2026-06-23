@@ -6,6 +6,7 @@ import { Btn } from "@/components/primitives/Btn";
 import { Pill } from "@/components/primitives/Pill";
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
 import { SEMAFORO } from "@/data/mock";
+import { login } from "@/lib/api";
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -74,13 +75,19 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const submit = (e?: FormEvent) => {
+  const submit = async (e?: FormEvent) => {
     e?.preventDefault();
     if (!email.includes("@")) { setErr("Ingresa un correo válido"); return; }
     if (pwd.length < 4)       { setErr("La contraseña es demasiado corta"); return; }
     setErr("");
     setLoading(true);
-    setTimeout(() => { setLoading(false); onLogin(); }, 600);
+    try {
+      await login(email, pwd);
+      onLogin(); // component unmounts on navigate — no setLoading(false) on success
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Error al iniciar sesión");
+      setLoading(false);
+    }
   };
 
   const semaforoItems = [
