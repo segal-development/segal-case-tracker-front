@@ -12,6 +12,7 @@ import { useAdminStats } from "@/hooks/useAdminStats";
 import { useGoals, useSetGoal } from "@/hooks/useGoals";
 import { useMe } from "@/hooks/useMe";
 import { AccountsCard } from "@/components/admin/AccountsCard";
+import { SyncStatusCard } from "@/components/admin/SyncStatusCard";
 import { fmtDate } from "@/lib/format";
 
 /* ─── Shared page styles ─── */
@@ -331,6 +332,7 @@ export function Admin() {
         </div>
       </div>
 
+      {isAdmin && <SyncStatusCard />}
       {isAdmin && <AccountsCard />}
 
       {/* Metas del estudio */}
