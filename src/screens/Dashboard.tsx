@@ -8,7 +8,16 @@ import { Btn } from "@/components/primitives/Btn";
 import { Skeleton } from "@/components/Skeleton";
 import { useCausas } from "@/hooks/useCausas";
 import { useGoals } from "@/hooks/useGoals";
-import { BarChart, Bar, XAxis, Cell, LabelList, ResponsiveContainer } from "recharts";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Bar } from "react-chartjs-2";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, ChartDataLabels);
+
+function cssVar(name: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 import type { Causa } from "@/data/types";
 import type { SemaforoColor, SemaforoValue } from "@/data/types";
@@ -305,12 +314,46 @@ function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
   // Monthly target (meta) is configured by the administrator (Admin → Metas).
   const pct = meta != null && meta > 0 ? Math.min(100, Math.round((proyeccion / meta) * 100)) : 0;
   const onTrack = meta != null ? proyeccion >= meta : null;
-  const accent = onTrack ? "#3a8a5e" : "#b08214"; // fj-verde / fj-amarillo (recharts needs a concrete color)
-  const barData = [
-    { name: "Este mes", value: actual, color: accent },
-    { name: "Proyección", value: proyeccion, color: `${accent}99` },
-    { name: "Meta", value: meta ?? 0, color: "#cabfb0" },
-  ];
+  const accent = onTrack ? "#3a8a5e" : "#b08214"; // fj-verde / fj-amarillo (canvas needs a concrete color)
+  const ink = cssVar("--fj-ink", "#0a0e1a");
+  const ink3 = cssVar("--fj-ink3", "#6b7686");
+  const chartData = {
+    labels: ["Este mes", "Proyección", "Meta"],
+    datasets: [
+      {
+        data: [actual, proyeccion, meta ?? 0],
+        backgroundColor: [accent, `${accent}99`, "#cabfb0"],
+        borderRadius: 6,
+        borderSkipped: false,
+        maxBarThickness: 64,
+      },
+    ],
+  };
+  const chartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 22 } },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+      datalabels: {
+        anchor: "end",
+        align: "end",
+        offset: 2,
+        color: ink,
+        font: { family: cssVar("--fj-heading", "Georgia, serif"), size: 17, weight: 600 },
+        formatter: (v: number) => v,
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { color: ink3, font: { size: 11 } },
+      },
+      y: { display: false, beginAtZero: true, grace: "18%" },
+    },
+  };
 
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
@@ -343,25 +386,9 @@ function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
           </>
         ) : (
           <>
-            {/* Comparative bars: este mes / proyección / meta */}
-            <div style={{ height: 200, marginTop: 4 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} margin={{ top: 24, right: 8, left: 8, bottom: 4 }}>
-                  <XAxis
-                    dataKey="name" axisLine={false} tickLine={false}
-                    tick={{ fontSize: 11, fill: "var(--fj-ink3)" }}
-                  />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={62} isAnimationActive={false}>
-                    {barData.map((d, i) => (
-                      <Cell key={i} fill={d.color} />
-                    ))}
-                    <LabelList
-                      dataKey="value" position="top"
-                      style={{ fontFamily: "var(--fj-heading)", fontSize: 17, fontWeight: 600, fill: "var(--fj-ink)" }}
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            {/* Comparative bars (Chart.js): este mes / proyección / meta */}
+            <div style={{ height: 210, marginTop: 4 }}>
+              <Bar data={chartData} options={chartOptions} />
             </div>
             <div style={{ marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 600, color: accent }}>
               {onTrack ? `✓ En camino a la meta · ${pct}%` : `Por debajo de la meta · ${pct}%`}
