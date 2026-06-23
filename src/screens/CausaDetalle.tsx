@@ -1068,6 +1068,8 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
             style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}
           >
             <SemaforoRing status={causa.semaforo} size={64} />
+            {/* Asistente IA + acciones — ocultos por ahora (se reactivan luego) */}
+            {false && (
             <div style={{ display: "flex", gap: 8 }}>
               <Btn
                 kind="secondary"
@@ -1084,6 +1086,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
                 <MoreIcon size={15} strokeWidth={1.6} />
               </Btn>
             </div>
+            )}
           </div>
         </div>
       </Card>

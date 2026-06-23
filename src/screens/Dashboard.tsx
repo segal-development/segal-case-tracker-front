@@ -8,7 +8,7 @@ import { Btn } from "@/components/primitives/Btn";
 import { Skeleton } from "@/components/Skeleton";
 import { useCausas } from "@/hooks/useCausas";
 import { useGoals } from "@/hooks/useGoals";
-import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, Cell, LabelList, ResponsiveContainer } from "recharts";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 import type { Causa } from "@/data/types";
 import type { SemaforoColor, SemaforoValue } from "@/data/types";
@@ -305,14 +305,12 @@ function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
   // Monthly target (meta) is configured by the administrator (Admin → Metas).
   const pct = meta != null && meta > 0 ? Math.min(100, Math.round((proyeccion / meta) * 100)) : 0;
   const onTrack = meta != null ? proyeccion >= meta : null;
-  const gaugeColor = onTrack ? "#3a8a5e" : "#b08214"; // fj-verde / fj-amarillo (recharts needs a concrete color)
-
-  const stat = (l: string, v: number, c: string) => (
-    <div key={l} style={{ textAlign: "center" }}>
-      <div style={{ fontFamily: "var(--fj-heading)", fontSize: 22, fontWeight: 600, color: c, fontVariantNumeric: "tabular-nums" }}>{v}</div>
-      <div style={{ fontFamily: "var(--fj-body)", fontSize: 10.5, color: "var(--fj-ink3)", textTransform: "uppercase", letterSpacing: ".06em" }}>{l}</div>
-    </div>
-  );
+  const accent = onTrack ? "#3a8a5e" : "#b08214"; // fj-verde / fj-amarillo (recharts needs a concrete color)
+  const barData = [
+    { name: "Este mes", value: actual, color: accent },
+    { name: "Proyección", value: proyeccion, color: `${accent}99` },
+    { name: "Meta", value: meta ?? 0, color: "#cabfb0" },
+  ];
 
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
@@ -345,35 +343,28 @@ function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
           </>
         ) : (
           <>
-            {/* Gauge: projection toward the monthly target */}
-            <div style={{ position: "relative", height: 150 }}>
+            {/* Comparative bars: este mes / proyección / meta */}
+            <div style={{ height: 200, marginTop: 4 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <RadialBarChart
-                  innerRadius="74%" outerRadius="100%" data={[{ value: pct }]}
-                  startAngle={180} endAngle={0}
-                >
-                  <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-                  <RadialBar
-                    dataKey="value" angleAxisId={0} fill={gaugeColor} cornerRadius={10}
-                    background={{ fill: "var(--fj-panel2)" }}
+                <BarChart data={barData} margin={{ top: 24, right: 8, left: 8, bottom: 4 }}>
+                  <XAxis
+                    dataKey="name" axisLine={false} tickLine={false}
+                    tick={{ fontSize: 11, fill: "var(--fj-ink3)" }}
                   />
-                </RadialBarChart>
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={62} isAnimationActive={false}>
+                    {barData.map((d, i) => (
+                      <Cell key={i} fill={d.color} />
+                    ))}
+                    <LabelList
+                      dataKey="value" position="top"
+                      style={{ fontFamily: "var(--fj-heading)", fontSize: 17, fontWeight: 600, fill: "var(--fj-ink)" }}
+                    />
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
-              <div style={{
-                position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "flex-end", paddingBottom: 6,
-              }}>
-                <span style={{ fontFamily: "var(--fj-heading)", fontSize: 36, fontWeight: 600, color: gaugeColor, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{pct}%</span>
-                <span style={{ fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-ink3)" }}>de la meta</span>
-              </div>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-around", marginTop: 6 }}>
-              {stat("Este mes", actual, "var(--fj-ink)")}
-              {stat("Proyección", proyeccion, "var(--fj-ink)")}
-              {stat("Meta", meta, "var(--fj-ink3)")}
-            </div>
-            <div style={{ marginTop: 12, textAlign: "center", fontSize: 13, fontWeight: 600, color: gaugeColor }}>
-              {onTrack ? "✓ En camino a la meta" : "Por debajo de la meta"}
+            <div style={{ marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 600, color: accent }}>
+              {onTrack ? `✓ En camino a la meta · ${pct}%` : `Por debajo de la meta · ${pct}%`}
             </div>
           </>
         )}
