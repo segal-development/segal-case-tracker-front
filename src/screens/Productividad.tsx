@@ -6,6 +6,9 @@ import { Splash } from "@/components/Splash";
 import { useFirmStats } from "@/hooks/useFirmStats";
 import type { FirmLawyerItem, FirmMateriaItem } from "@/hooks/useFirmStats";
 import { useMe } from "@/hooks/useMe";
+import { useMyStats } from "@/hooks/useMyStats";
+import type { MyStats } from "@/hooks/useMyStats";
+import { ProyeccionProductividad } from "@/components/ProyeccionProductividad";
 import type { CSSProperties } from "react";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -227,160 +230,112 @@ function MateriasPanel({ data }: { data: FirmMateriaItem[] }) {
   );
 }
 
-// ─── Productividad ────────────────────────────────────────────────────────────
+// ─── MiProductividad ─────────────────────────────────────────────────────────
 
-function normalizeRut(r: string): string {
-  return (r || "").replace(/[.\-\s]/g, "").toLowerCase();
-}
-
-/** Lawyer-scoped view: a lawyer sees ONLY their own productivity (no team ranking). */
-function MiProductividad({ mine, name }: { mine?: FirmLawyerItem; name: string }) {
+function MiProductividad({ my }: { my: MyStats }) {
   const kicker: CSSProperties = {
     fontSize: 12, color: "var(--fj-ink3)", textTransform: "uppercase",
     letterSpacing: "0.08em", marginBottom: 4,
   };
   const semaforo = [
-    { label: "Crítico", n: mine?.rojo ?? 0, bg: "var(--fj-rojo-soft)", c: "var(--fj-rojo)" },
-    { label: "Atención", n: mine?.amarillo ?? 0, bg: "var(--fj-amarillo-soft)", c: "var(--fj-amarillo)" },
-    { label: "Al día", n: mine?.verde ?? 0, bg: "var(--fj-verde-soft)", c: "var(--fj-verde)" },
+    { label: "Crítico", n: my.rojo, bg: "var(--fj-rojo-soft)", c: "var(--fj-rojo)" },
+    { label: "Atención", n: my.amarillo, bg: "var(--fj-amarillo-soft)", c: "var(--fj-amarillo)" },
+    { label: "Al día", n: my.verde, bg: "var(--fj-verde-soft)", c: "var(--fj-verde)" },
   ];
   return (
     <div style={{ padding: "32px 40px", fontFamily: "var(--fj-body)" }}>
       <div style={{ marginBottom: 32 }}>
         <div style={kicker}>Mi productividad</div>
         <h1 style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--fj-heading)", margin: 0, color: "var(--fj-ink)" }}>
-          {name}
+          {my.nombre}
         </h1>
       </div>
-      {!mine ? (
-        <Card pad={40} style={{ textAlign: "center", color: "var(--fj-ink3)", fontSize: 14 }}>
-          Todavía no tenés causas asignadas.
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 16 }}>
+        <Card pad={20}><KPI label="Mis causas" value={my.case_count} /></Card>
+        <Card pad={20} style={my.rojo > 0 ? { background: "var(--fj-rojo-soft)" } : undefined}>
+          <KPI label="En rojo" value={my.rojo} />
         </Card>
-      ) : (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 16 }}>
-            <Card pad={20}><KPI label="Mis causas" value={mine.case_count} /></Card>
-            <Card pad={20} style={mine.rojo > 0 ? { background: "var(--fj-rojo-soft)" } : undefined}>
-              <KPI label="En rojo" value={mine.rojo} />
-            </Card>
-            <Card pad={20}><KPI label="Estancadas" value={mine.stale} /></Card>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-            {semaforo.map((x) => (
-              <Card key={x.label} pad={20} style={{ background: x.bg }}>
-                <div style={{ fontFamily: "var(--fj-heading)", fontSize: 32, fontWeight: 600, color: x.c, fontVariantNumeric: "tabular-nums" }}>
-                  {x.n}
-                </div>
-                <div style={{ fontSize: 13, color: "var(--fj-ink2)", marginTop: 4 }}>{x.label}</div>
-              </Card>
-            ))}
-          </div>
-        </>
-      )}
+        <Card pad={20}><KPI label="Estancadas" value={my.stale} /></Card>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+        {semaforo.map((x) => (
+          <Card key={x.label} pad={20} style={{ background: x.bg }}>
+            <div style={{ fontFamily: "var(--fj-heading)", fontSize: 32, fontWeight: 600, color: x.c, fontVariantNumeric: "tabular-nums" }}>
+              {x.n}
+            </div>
+            <div style={{ fontSize: 13, color: "var(--fj-ink2)", marginTop: 4 }}>{x.label}</div>
+          </Card>
+        ))}
+      </div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fj-ink2)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          Proyección mensual
+        </div>
+        <ProyeccionProductividad
+          actual={my.actividad_mes}
+          proyeccion={my.proyeccion_mes}
+          meta={my.meta}
+          isLoading={false}
+        />
+      </div>
     </div>
   );
 }
 
+// ─── Productividad ────────────────────────────────────────────────────────────
+
 export function Productividad() {
   const [tab, setTab] = useState<TabId>("equipo");
-  const { data: stats, isLoading } = useFirmStats();
   const { data: me, isLoading: meLoading } = useMe();
+  const isAdmin = me?.role === "admin";
 
-  if (isLoading || meLoading || !stats || !me) {
-    return <Splash inline label="Cargando productividad" />;
+  const { data: stats, isLoading: firmLoading } = useFirmStats({ enabled: !!me && isAdmin });
+  const { data: my, isLoading: myLoading } = useMyStats({ enabled: !!me && !isAdmin });
+
+  if (meLoading || !me) return <Splash inline label="Cargando productividad" />;
+
+  if (!isAdmin) {
+    if (myLoading || !my) return <Splash inline label="Cargando productividad" />;
+    return <MiProductividad my={my} />;
   }
 
-  // Lawyers see only their own productivity; admins see the firm-wide analysis.
-  if (me.role !== "admin") {
-    const mine = stats.by_lawyer.find((l) => normalizeRut(l.rut) === normalizeRut(me.rut));
-    return <MiProductividad mine={mine} name={me.name} />;
-  }
+  if (firmLoading || !stats) return <Splash inline label="Cargando productividad" />;
 
   return (
     <div style={{ padding: "32px 40px", fontFamily: "var(--fj-body)" }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <div
-          style={{
-            fontSize: 12,
-            color: "var(--fj-ink3)",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            marginBottom: 4,
-          }}
-        >
+        <div style={{ fontSize: 12, color: "var(--fj-ink3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
           Análisis del estudio
         </div>
-        <h1
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            fontFamily: "var(--fj-heading)",
-            margin: 0,
-            color: "var(--fj-ink)",
-          }}
-        >
+        <h1 style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--fj-heading)", margin: 0, color: "var(--fj-ink)" }}>
           Productividad
         </h1>
       </div>
 
       {/* KPI Row */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
-        <Card pad={20}>
-          <KPI label="Causas activas" value={stats.totals.cases} />
-        </Card>
-        <Card
-          pad={20}
-          style={
-            stats.totals.semaforo.rojo > 0
-              ? { background: "var(--fj-rojo-soft)" }
-              : undefined
-          }
-        >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+        <Card pad={20}><KPI label="Causas activas" value={stats.totals.cases} /></Card>
+        <Card pad={20} style={stats.totals.semaforo.rojo > 0 ? { background: "var(--fj-rojo-soft)" } : undefined}>
           <KPI label="Causas en rojo" value={stats.totals.semaforo.rojo} />
         </Card>
-        <Card pad={20}>
-          <KPI label="Causas estancadas" value={stats.totals.stale} />
-        </Card>
-        <Card pad={20}>
-          <KPI label="Abogados" value={stats.by_lawyer.length} />
-        </Card>
+        <Card pad={20}><KPI label="Causas estancadas" value={stats.totals.stale} /></Card>
+        <Card pad={20}><KPI label="Abogados" value={stats.by_lawyer.length} /></Card>
       </div>
 
       {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          borderBottom: "1px solid var(--fj-line)",
-          marginBottom: 24,
-        }}
-      >
+      <div style={{ display: "flex", borderBottom: "1px solid var(--fj-line)", marginBottom: 24 }}>
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             style={{
-              padding: "10px 20px",
-              fontSize: 14,
-              fontFamily: "var(--fj-body)",
+              padding: "10px 20px", fontSize: 14, fontFamily: "var(--fj-body)",
               fontWeight: tab === t.id ? 600 : 400,
-              color:
-                tab === t.id ? "var(--fj-primary)" : "var(--fj-ink2)",
-              background: "none",
-              border: "none",
-              borderBottom:
-                tab === t.id
-                  ? "2px solid var(--fj-primary)"
-                  : "2px solid transparent",
-              cursor: "pointer",
-              marginBottom: -1,
+              color: tab === t.id ? "var(--fj-primary)" : "var(--fj-ink2)",
+              background: "none", border: "none",
+              borderBottom: tab === t.id ? "2px solid var(--fj-primary)" : "2px solid transparent",
+              cursor: "pointer", marginBottom: -1,
             }}
           >
             {t.label}

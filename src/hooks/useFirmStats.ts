@@ -40,9 +40,10 @@ export interface FirmStats {
   by_lawyer: FirmLawyerItem[];
 }
 
-export function useFirmStats() {
+export function useFirmStats(opts?: { enabled?: boolean }) {
   return useQuery<FirmStats>({
     queryKey: ["firmStats"],
     queryFn: () => apiGet<FirmStats>("/stats/firm"),
+    enabled: opts?.enabled ?? true,
   });
 }
