@@ -10,6 +10,8 @@ import {
 } from "@/components/primitives/icons";
 import { useAdminStats } from "@/hooks/useAdminStats";
 import { useGoals, useSetGoal } from "@/hooks/useGoals";
+import { useMe } from "@/hooks/useMe";
+import { AccountsCard } from "@/components/admin/AccountsCard";
 import { fmtDate } from "@/lib/format";
 
 /* ─── Shared page styles ─── */
@@ -224,6 +226,8 @@ export function Admin() {
   const { data, isLoading, error } = useAdminStats();
   const { data: goals } = useGoals();
   const setGoal = useSetGoal();
+  const { data: me } = useMe();
+  const isAdmin = me?.role === "admin";
   const [metaInput, setMetaInput] = useState("");
   useEffect(() => {
     if (goals?.monthly_productivity != null) setMetaInput(String(goals.monthly_productivity));
@@ -326,6 +330,8 @@ export function Admin() {
           </Btn>
         </div>
       </div>
+
+      {isAdmin && <AccountsCard />}
 
       {/* Metas del estudio */}
       <Card pad={0} style={{ marginBottom: 20, overflow: "hidden" }}>
