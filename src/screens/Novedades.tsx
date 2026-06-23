@@ -1,4 +1,5 @@
 import type { CSSProperties, MouseEvent } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
@@ -19,10 +20,17 @@ const pageCss: CSSProperties = {
 export function Novedades() {
   const navigate = useNavigate();
   const { novedades, count, markAllSeen, isLoading } = useNovedades();
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 15;
 
   if (isLoading) {
     return <Splash inline label="Cargando novedades" />;
   }
+
+  const totalPages = Math.max(1, Math.ceil(novedades.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const start = safePage * PAGE_SIZE;
+  const pageItems = novedades.slice(start, start + PAGE_SIZE);
 
   return (
     <div style={pageCss}>
@@ -65,10 +73,11 @@ export function Novedades() {
           </div>
         </Card>
       ) : (
+        <>
         <Card pad={0} style={{ overflow: "hidden" }}>
-          {novedades.map((nov, idx) => {
+          {pageItems.map((nov, idx) => {
             const { causa, ultima, isNew } = nov;
-            const isLast = idx === novedades.length - 1;
+            const isLast = idx === pageItems.length - 1;
             return (
               <button
                 key={causa.id}
@@ -154,6 +163,31 @@ export function Novedades() {
             );
           })}
         </Card>
+        {totalPages > 1 && (
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            marginTop: 16, padding: "0 2px",
+          }}>
+            <span style={{ fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink3)" }}>
+              Mostrando {start + 1}–{Math.min(start + PAGE_SIZE, novedades.length)} de {novedades.length}
+            </span>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <Btn kind="secondary" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>
+                Anterior
+              </Btn>
+              <span style={{
+                fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink2)",
+                minWidth: 54, textAlign: "center",
+              }}>
+                {safePage + 1} / {totalPages}
+              </span>
+              <Btn kind="secondary" size="sm" disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)}>
+                Siguiente
+              </Btn>
+            </div>
+          </div>
+        )}
+        </>
       )}
     </div>
   );
