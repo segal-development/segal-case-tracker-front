@@ -335,7 +335,21 @@ function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
     layout: { padding: { top: 22 } },
     plugins: {
       legend: { display: false },
-      tooltip: { enabled: false },
+      tooltip: {
+        enabled: true,
+        backgroundColor: "rgba(10,14,26,0.92)",
+        titleColor: "#ffffff",
+        bodyColor: "#e6e8ee",
+        padding: 10,
+        cornerRadius: 6,
+        displayColors: false,
+        titleFont: { family: cssVar("--fj-heading", "Georgia, serif"), size: 13 },
+        bodyFont: { size: 13 },
+        callbacks: {
+          title: (items: any) => items[0]?.label ?? "",
+          label: (ctx: any) => `${ctx.parsed.y} causas`,
+        },
+      },
       datalabels: {
         anchor: "end",
         align: "end",
