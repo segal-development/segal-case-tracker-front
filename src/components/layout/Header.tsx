@@ -8,6 +8,7 @@ import { useRole } from "@/hooks/useRole";
 import { useNovedades } from "@/novedades/useNovedades";
 import type { Novedad } from "@/novedades/useNovedades";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
+import { useMe } from "@/hooks/useMe";
 import { logout } from "@/lib/api";
 import { fromNow } from "@/lib/format";
 import type { Role } from "@/hooks/useRole";
@@ -149,6 +150,8 @@ function NotifPanel({ novedades, count, markAllSeen, isLoading, onClose }: Notif
 export function Header() {
   const { role, setRole } = useRole();
   const { abogado, clear } = useSelectedLawyer();
+  const { data: me } = useMe();
+  const isAdmin = me?.role === "admin";
   const { novedades, count, markAllSeen, isLoading } = useNovedades();
   const [notifOpen, setNotifOpen] = useState(false);
 
@@ -234,16 +237,18 @@ export function Header() {
             <span style={{ fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink)", fontWeight: 600 }}>
               {abogado?.nombre ?? "—"}
             </span>
-            <button
-              onClick={clear}
-              style={{
-                fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-primary)",
-                background: "none", border: "none", cursor: "pointer",
-                padding: 0, textAlign: "left",
-              }}
-            >
-              Cambiar abogado
-            </button>
+            {isAdmin && (
+              <button
+                onClick={clear}
+                style={{
+                  fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-primary)",
+                  background: "none", border: "none", cursor: "pointer",
+                  padding: 0, textAlign: "left",
+                }}
+              >
+                Cambiar abogado
+              </button>
+            )}
             <button
               onClick={() => { logout(); clear(); window.location.href = "/login"; }}
               style={{
@@ -257,22 +262,24 @@ export function Header() {
           </div>
         </div>
 
-        {/* Role switcher */}
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as Role)}
-          style={{
-            height: 28, padding: "0 8px", borderRadius: 6,
-            border: "1px solid var(--fj-line-strong)",
-            background: "var(--fj-panel)", color: "var(--fj-ink2)",
-            fontFamily: "var(--fj-body)", fontSize: 11.5, cursor: "pointer",
-          }}
-          title="Cambiar rol (demo)"
-        >
-          <option value="abogado">Abogado</option>
-          <option value="supervisor">Supervisor</option>
-          <option value="admin">Admin</option>
-        </select>
+        {/* Role switcher — demo tool, admins only */}
+        {isAdmin && (
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as Role)}
+            style={{
+              height: 28, padding: "0 8px", borderRadius: 6,
+              border: "1px solid var(--fj-line-strong)",
+              background: "var(--fj-panel)", color: "var(--fj-ink2)",
+              fontFamily: "var(--fj-body)", fontSize: 11.5, cursor: "pointer",
+            }}
+            title="Cambiar rol (demo)"
+          >
+            <option value="abogado">Abogado</option>
+            <option value="supervisor">Supervisor</option>
+            <option value="admin">Admin</option>
+          </select>
+        )}
       </div>
 
       {notifOpen && (
