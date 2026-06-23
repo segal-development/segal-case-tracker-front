@@ -1,18 +1,20 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Splash } from "@/components/Splash";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoginScreen } from "@/screens/LoginScreen";
-import { Dashboard } from "@/screens/Dashboard";
-import { Causas } from "@/screens/Causas";
-import { CausaDetalle } from "@/screens/CausaDetalle";
-import { Plazos } from "@/screens/Plazos";
-import { Productividad } from "@/screens/Productividad";
-import { Supervisor } from "@/screens/Supervisor";
-import { Admin } from "@/screens/Admin";
-import { Novedades } from "@/screens/Novedades";
 import { PlaceholderScreen } from "@/screens/PlaceholderScreen";
-import { Showcase } from "@/screens/Showcase";
+
+// Lazy-loaded route screens — each becomes its own chunk (smaller initial bundle).
+const Dashboard = lazy(() => import("@/screens/Dashboard").then((m) => ({ default: m.Dashboard })));
+const Causas = lazy(() => import("@/screens/Causas").then((m) => ({ default: m.Causas })));
+const CausaDetalle = lazy(() => import("@/screens/CausaDetalle").then((m) => ({ default: m.CausaDetalle })));
+const Plazos = lazy(() => import("@/screens/Plazos").then((m) => ({ default: m.Plazos })));
+const Productividad = lazy(() => import("@/screens/Productividad").then((m) => ({ default: m.Productividad })));
+const Supervisor = lazy(() => import("@/screens/Supervisor").then((m) => ({ default: m.Supervisor })));
+const Admin = lazy(() => import("@/screens/Admin").then((m) => ({ default: m.Admin })));
+const Novedades = lazy(() => import("@/screens/Novedades").then((m) => ({ default: m.Novedades })));
+const Showcase = lazy(() => import("@/screens/Showcase").then((m) => ({ default: m.Showcase })));
 import { NuevaCausaModal, SubirDocumentoModal, NuevoPlazoModal } from "@/components/modals";
 import { SelectLawyer } from "@/screens/SelectLawyer";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
