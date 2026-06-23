@@ -2,9 +2,10 @@ const BASE = import.meta.env.VITE_API_BASE as string;
 
 const TOKEN_KEY = "sd_token";
 
-/** Auth token: the per-user JWT from login if present, else the baked QA token. */
+/** Auth token: the per-user JWT from a real login. No shared/baked fallback —
+ *  every API call requires a real per-user login (no anonymous bypass). */
 function authToken(): string {
-  return localStorage.getItem(TOKEN_KEY) || (import.meta.env.VITE_API_TOKEN as string) || "";
+  return localStorage.getItem(TOKEN_KEY) || "";
 }
 
 function clearAuth(): void {
