@@ -349,9 +349,15 @@ function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { color: ink3, font: { size: 11 } },
+        ticks: { color: ink3, font: { size: 12 } },
       },
-      y: { display: false, beginAtZero: true, grace: "18%" },
+      y: {
+        beginAtZero: true,
+        grace: "12%",
+        border: { display: false },
+        grid: { color: "rgba(0,0,0,0.06)" },
+        ticks: { color: ink3, font: { size: 11 }, maxTicksLimit: 6, padding: 6 },
+      },
     },
   };
 
