@@ -8,6 +8,7 @@ import { useRole } from "@/hooks/useRole";
 import { useNovedades } from "@/novedades/useNovedades";
 import type { Novedad } from "@/novedades/useNovedades";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
+import { logout } from "@/lib/api";
 import { fromNow } from "@/lib/format";
 import type { Role } from "@/hooks/useRole";
 
@@ -242,6 +243,16 @@ export function Header() {
               }}
             >
               Cambiar abogado
+            </button>
+            <button
+              onClick={() => { logout(); clear(); window.location.href = "/login"; }}
+              style={{
+                fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-ink3)",
+                background: "none", border: "none", cursor: "pointer",
+                padding: 0, textAlign: "left", marginTop: 2,
+              }}
+            >
+              Cerrar sesión
             </button>
           </div>
         </div>
