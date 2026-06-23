@@ -945,7 +945,13 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
       </button>
 
       {/* Hero card */}
-      <Card pad={28} style={{ marginBottom: 22, position: "relative", overflow: "hidden" }}>
+      <Card pad={28} style={{
+        marginBottom: 22, position: "relative", overflow: "hidden",
+        background: causa.semaforo === "rojo" ? "var(--fj-rojo-soft)"
+          : causa.semaforo === "amarillo" ? "var(--fj-amarillo-soft)"
+          : causa.semaforo === "verde" ? "var(--fj-verde-soft)"
+          : "var(--fj-panel)",
+      }}>
         {/* Left color stripe */}
         <div
           style={{

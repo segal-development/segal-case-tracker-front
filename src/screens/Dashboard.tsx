@@ -8,6 +8,7 @@ import { Btn } from "@/components/primitives/Btn";
 import { Skeleton } from "@/components/Skeleton";
 import { useCausas } from "@/hooks/useCausas";
 import { useGoals } from "@/hooks/useGoals";
+import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from "recharts";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
 import type { Causa } from "@/data/types";
 import type { SemaforoColor, SemaforoValue } from "@/data/types";
@@ -31,17 +32,6 @@ const kickerCss: React.CSSProperties = {
 };
 
 /* ─── Progress bar ─── */
-function ProgressBar({ value, status }: { value: number; status: SemaforoColor }) {
-  const color = status === "rojo" ? "var(--fj-rojo)"
-              : status === "amarillo" ? "var(--fj-amarillo)"
-              : "var(--fj-verde)";
-  return (
-    <div style={{ height: 4, background: "var(--fj-panel2)", borderRadius: 4, overflow: "hidden" }}>
-      <div style={{ width: `${value * 100}%`, height: "100%", background: color, borderRadius: 4 }} />
-    </div>
-  );
-}
-
 /* ─── Semáforo cluster ─── */
 function SemaforoCluster() {
   const navigate = useNavigate();
@@ -112,7 +102,6 @@ function SemaforoCluster() {
               <div style={{ fontFamily: "var(--fj-heading)", fontSize: 16, fontWeight: 500, color: "var(--fj-ink)" }}>{x.t}</div>
               <div style={{ fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink3)", marginTop: 2 }}>{x.desc}</div>
             </div>
-            <ProgressBar value={classified > 0 ? x.n / classified : 0} status={x.s} />
           </Card>
         ))}
       </div>
@@ -316,6 +305,14 @@ function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
   // Monthly target (meta) is configured by the administrator (Admin → Metas).
   const pct = meta != null && meta > 0 ? Math.min(100, Math.round((proyeccion / meta) * 100)) : 0;
   const onTrack = meta != null ? proyeccion >= meta : null;
+  const gaugeColor = onTrack ? "#3a8a5e" : "#b08214"; // fj-verde / fj-amarillo (recharts needs a concrete color)
+
+  const stat = (l: string, v: number, c: string) => (
+    <div key={l} style={{ textAlign: "center" }}>
+      <div style={{ fontFamily: "var(--fj-heading)", fontSize: 22, fontWeight: 600, color: c, fontVariantNumeric: "tabular-nums" }}>{v}</div>
+      <div style={{ fontFamily: "var(--fj-body)", fontSize: 10.5, color: "var(--fj-ink3)", textTransform: "uppercase", letterSpacing: ".06em" }}>{l}</div>
+    </div>
+  );
 
   return (
     <Card pad={0} style={{ overflow: "hidden" }}>
@@ -329,53 +326,54 @@ function ProyeccionProductividad({ actual, proyeccion, meta, isLoading }: {
       </div>
       <div style={{ padding: 20 }}>
         {isLoading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <Skeleton width="40%" height={40} />
-            <Skeleton width="70%" height={13} />
-            <Skeleton width="100%" height={8} />
-          </div>
-        ) : (
+          <Skeleton width="100%" height={180} />
+        ) : meta == null ? (
           <>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
               <span style={{
                 fontFamily: "var(--fj-heading)", fontWeight: 500, fontSize: 44,
-                letterSpacing: "-.02em", color: "var(--fj-ink)", lineHeight: 1,
-                fontVariantNumeric: "tabular-nums",
+                letterSpacing: "-.02em", color: "var(--fj-ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums",
               }}>{actual}</span>
-              <span style={{ fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink3)" }}>
-                causas accionadas este mes
-              </span>
+              <span style={{ fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink3)" }}>causas accionadas este mes</span>
             </div>
-
-            <div style={{ marginTop: 8, fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink2)" }}>
-              Proyección a fin de mes:{" "}
-              <strong style={{ color: "var(--fj-ink)", fontVariantNumeric: "tabular-nums" }}>{proyeccion}</strong>
+            <div style={{ marginTop: 8, fontSize: 13, color: "var(--fj-ink2)" }}>
+              Proyección a fin de mes: <strong style={{ color: "var(--fj-ink)" }}>{proyeccion}</strong>
             </div>
-
-            <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--fj-line)" }}>
-              {meta == null ? (
-                <div style={{ fontFamily: "var(--fj-body)", fontSize: 12.5, color: "var(--fj-ink3)" }}>
-                  Meta mensual: <strong style={{ color: "var(--fj-ink2)" }}>—</strong>{" "}
-                  · la administradora la configurará.
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 6 }}>
-                    <span style={{ color: "var(--fj-ink3)" }}>
-                      Meta mensual: <strong style={{ color: "var(--fj-ink2)" }}>{meta}</strong>
-                    </span>
-                    <span style={{ fontWeight: 600, color: onTrack ? "var(--fj-verde)" : "var(--fj-amarillo)" }}>
-                      {onTrack ? "En camino" : "Por debajo"} · {pct}%
-                    </span>
-                  </div>
-                  <div style={{ height: 8, background: "var(--fj-panel2)", borderRadius: 4, overflow: "hidden" }}>
-                    <div style={{
-                      width: `${pct}%`, height: "100%", borderRadius: 4,
-                      background: onTrack ? "var(--fj-verde)" : "var(--fj-amarillo)",
-                    }} />
-                  </div>
-                </>
-              )}
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--fj-line)", fontSize: 12.5, color: "var(--fj-ink3)" }}>
+              Meta mensual: <strong style={{ color: "var(--fj-ink2)" }}>—</strong> · la administradora la configurará.
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Gauge: projection toward the monthly target */}
+            <div style={{ position: "relative", height: 150 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart
+                  innerRadius="74%" outerRadius="100%" data={[{ value: pct }]}
+                  startAngle={180} endAngle={0}
+                >
+                  <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                  <RadialBar
+                    dataKey="value" angleAxisId={0} fill={gaugeColor} cornerRadius={10}
+                    background={{ fill: "var(--fj-panel2)" }}
+                  />
+                </RadialBarChart>
+              </ResponsiveContainer>
+              <div style={{
+                position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "flex-end", paddingBottom: 6,
+              }}>
+                <span style={{ fontFamily: "var(--fj-heading)", fontSize: 36, fontWeight: 600, color: gaugeColor, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{pct}%</span>
+                <span style={{ fontFamily: "var(--fj-body)", fontSize: 11, color: "var(--fj-ink3)" }}>de la meta</span>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-around", marginTop: 6 }}>
+              {stat("Este mes", actual, "var(--fj-ink)")}
+              {stat("Proyección", proyeccion, "var(--fj-ink)")}
+              {stat("Meta", meta, "var(--fj-ink3)")}
+            </div>
+            <div style={{ marginTop: 12, textAlign: "center", fontSize: 13, fontWeight: 600, color: gaugeColor }}>
+              {onTrack ? "✓ En camino a la meta" : "Por debajo de la meta"}
             </div>
           </>
         )}
