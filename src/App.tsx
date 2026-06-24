@@ -15,6 +15,7 @@ const Supervisor = lazy(() => import("@/screens/Supervisor").then((m) => ({ defa
 const Admin = lazy(() => import("@/screens/Admin").then((m) => ({ default: m.Admin })));
 const Novedades = lazy(() => import("@/screens/Novedades").then((m) => ({ default: m.Novedades })));
 const Showcase = lazy(() => import("@/screens/Showcase").then((m) => ({ default: m.Showcase })));
+const ComoFunciona = lazy(() => import("@/screens/ComoFunciona").then((m) => ({ default: m.ComoFunciona })));
 import { NuevaCausaModal, SubirDocumentoModal, NuevoPlazoModal } from "@/components/modals";
 import { SelectLawyer } from "@/screens/SelectLawyer";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
@@ -73,6 +74,7 @@ export default function App() {
             element={authed ? <Navigate to="/" replace /> : <LoginScreen onLogin={login} />}
           />
           <Route path="/showcase" element={<Showcase />} />
+          <Route path="/como-funciona" element={<ComoFunciona />} />
           <Route
             path="/select-lawyer"
             element={
