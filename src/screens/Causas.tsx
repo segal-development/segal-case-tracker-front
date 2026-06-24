@@ -3,7 +3,7 @@ import type { CSSProperties, MouseEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Download, Plus, Search, X, User, LayoutList, LayoutGrid,
-  MoreHorizontal, Check,
+  Check,
 } from "lucide-react";
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
 import { Avatar } from "@/components/primitives/Avatar";
@@ -20,7 +20,7 @@ import type { Causa, SemaforoColor, SemaforoValue } from "@/data/types";
 /* ─── Page-level style constants (match Dashboard convention) ─── */
 const pageCss: CSSProperties = {
   padding: "36px 40px 56px",
-  maxWidth: 1320,
+  maxWidth: 1600,
   margin: "0 auto",
 };
 
@@ -43,11 +43,6 @@ const thCss: CSSProperties = {
 };
 
 const tdCss: CSSProperties = { padding: "12px 14px", verticalAlign: "middle" };
-
-const iconBtnCss: CSSProperties = {
-  width: 28, height: 28, borderRadius: 6, border: 0, background: "transparent",
-  cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center",
-};
 
 /* ─── Semáforo quick-filter chip ─── */
 function SemChip({
@@ -132,9 +127,9 @@ function CausasTable({
               <th style={thCss}>Carátula</th>
               <th style={thCss}>Tribunal</th>
               <th style={thCss}>Materia</th>
+              <th style={thCss}>Estado</th>
               <th style={thCss}>Abogado</th>
               <th style={{ ...thCss, textAlign: "right" }}>Últ. actuación</th>
-              <th style={thCss} />
             </tr>
           </thead>
           <tbody>
@@ -238,15 +233,21 @@ function CausaRow({
 
       <td style={tdCss}>
         <Pill tone="neutral">{c.materia.split(" — ")[0]}</Pill>
+      </td>
+
+      <td style={tdCss}>
         {c.abandono_disponible && (
-          <Pill tone="primary" subtle style={{ marginTop: 4, fontSize: 10 }}>
+          <Pill tone="primary" subtle style={{ fontSize: 10 }}>
             Abandono disponible
           </Pill>
         )}
         {c.en_apremio && (
-          <Pill tone="amarillo" subtle style={{ marginTop: 4, fontSize: 10 }}>
+          <Pill tone="amarillo" subtle style={{ marginTop: c.abandono_disponible ? 4 : 0, fontSize: 10 }}>
             En apremio
           </Pill>
+        )}
+        {!c.abandono_disponible && !c.en_apremio && (
+          <span style={{ color: "var(--fj-ink3)", fontSize: 12 }}>—</span>
         )}
       </td>
 
@@ -266,12 +267,6 @@ function CausaRow({
 
       <td style={{ ...tdCss, textAlign: "right", color: "var(--fj-ink3)", fontVariantNumeric: "tabular-nums" }}>
         hace {c.diasUltima}d
-      </td>
-
-      <td style={tdCss}>
-        <button style={{ ...iconBtnCss, color: "var(--fj-ink3)" }} onClick={(e) => e.stopPropagation()}>
-          <MoreHorizontal size={16} strokeWidth={1.8} />
-        </button>
       </td>
     </tr>
   );
