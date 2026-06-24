@@ -91,7 +91,7 @@ function SemaforoBar({ sem, total }: { sem: FirmSemaforo; total: number }) {
       tooltip: {
         backgroundColor: "rgba(10,14,26,0.92)", padding: 9, cornerRadius: 6, displayColors: false,
         callbacks: {
-          label: (c: any) => `${c.parsed} causas (${total > 0 ? Math.round((c.parsed / total) * 100) : 0}%)`,
+          label: (c: any) => `${c.parsed.y} causas (${total > 0 ? Math.round((c.parsed.y / total) * 100) : 0}%)`,
         },
       },
     },
