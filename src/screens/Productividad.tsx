@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Card } from "@/components/primitives/Card";
-import { Btn } from "@/components/primitives/Btn";
 import { KPI } from "@/components/primitives/KPI";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Splash } from "@/components/Splash";
@@ -45,63 +44,39 @@ type TabId = (typeof TABS)[number]["id"];
 // ─── RankingEquipo ────────────────────────────────────────────────────────────
 
 function RankingEquipo({ data }: { data: FirmLawyerItem[] }) {
-  const [orden, setOrden] = useState<"riesgo" | "carga">("riesgo");
-  const [page, setPage] = useState(0);
-  const PAGE = 10;
+  const sorted = [...data].sort((a, b) => b.case_count - a.case_count);
+  const maxCases = Math.max(...sorted.map((a) => a.case_count), 1);
 
-  if (data.length === 0) {
+  if (sorted.length === 0) {
     return (
       <Card pad={24} elevated>
-        <div style={{ textAlign: "center", color: "var(--fj-ink3)", padding: "48px 0" }}>
+        <div
+          style={{
+            textAlign: "center",
+            color: "var(--fj-ink3)",
+            padding: "48px 0",
+          }}
+        >
           Sin abogados registrados
         </div>
       </Card>
     );
   }
 
-  const sorted = [...data].sort((a, b) =>
-    orden === "riesgo"
-      ? b.rojo - a.rojo || b.case_count - a.case_count
-      : b.case_count - a.case_count,
-  );
-  const metric = (a: FirmLawyerItem) => (orden === "riesgo" ? a.rojo : a.case_count);
-  const maxVal = Math.max(...sorted.map(metric), 1);
-  const barColor = orden === "riesgo" ? "var(--fj-rojo)" : "var(--fj-primary)";
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE));
-  const safePage = Math.min(page, totalPages - 1);
-  const start = safePage * PAGE;
-  const pageItems = sorted.slice(start, start + PAGE);
-
-  const tab = (key: "riesgo" | "carga", label: string) => (
-    <button
-      onClick={() => { setOrden(key); setPage(0); }}
-      style={{
-        padding: "5px 12px", borderRadius: 999, cursor: "pointer", fontSize: 12.5,
-        fontFamily: "var(--fj-body)", fontWeight: 500,
-        border: `1px solid ${orden === key ? "var(--fj-line-strong)" : "var(--fj-line)"}`,
-        background: orden === key ? "var(--fj-panel)" : "transparent",
-        color: orden === key ? "var(--fj-ink)" : "var(--fj-ink3)",
-      }}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <Card pad={24} elevated>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <div style={{ fontWeight: 600, fontFamily: "var(--fj-heading)", fontSize: 16 }}>
-          Equipo
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <span style={{ fontSize: 11.5, color: "var(--fj-ink3)", alignSelf: "center", marginRight: 2 }}>Ordenar por</span>
-          {tab("riesgo", "Riesgo")}
-          {tab("carga", "Carga")}
-        </div>
+      <div
+        style={{
+          fontWeight: 600,
+          fontFamily: "var(--fj-heading)",
+          fontSize: 16,
+          marginBottom: 20,
+        }}
+      >
+        Equipo
       </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
-        {pageItems.map((a, i) => (
+        {sorted.map((a, idx) => (
           <div
             key={a.rut}
             style={{
@@ -110,42 +85,67 @@ function RankingEquipo({ data }: { data: FirmLawyerItem[] }) {
               gap: 16,
               alignItems: "center",
               padding: "12px 0",
-              borderBottom: i < pageItems.length - 1 ? "1px solid var(--fj-line)" : "none",
+              borderBottom:
+                idx < sorted.length - 1
+                  ? "1px solid var(--fj-line)"
+                  : "none",
             }}
           >
-            <span style={{ fontSize: 12, color: "var(--fj-ink3)", fontVariantNumeric: "tabular-nums", width: 20, textAlign: "right" }}>
-              {start + i + 1}
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--fj-ink3)",
+                fontVariantNumeric: "tabular-nums",
+                width: 20,
+                textAlign: "right",
+              }}
+            >
+              {idx + 1}
             </span>
-            <Avatar iniciales={getInitials(a.nombre)} color={rutToColor(a.rut)} nombre={a.nombre} size={36} />
+            <Avatar
+              iniciales={getInitials(a.nombre)}
+              color={rutToColor(a.rut)}
+              nombre={a.nombre}
+              size={36}
+            />
             <div>
               <div style={{ fontSize: 14, fontWeight: 500 }}>{a.nombre}</div>
               <div style={{ fontSize: 12, color: "var(--fj-ink3)" }}>
                 {a.case_count} causas · {a.stale} estancadas
               </div>
             </div>
-            <div style={{ fontSize: 12, display: "flex", gap: 8, whiteSpace: "nowrap" }}>
+            <div
+              style={{
+                fontSize: 12,
+                display: "flex",
+                gap: 8,
+                whiteSpace: "nowrap",
+              }}
+            >
               <span style={{ color: "var(--fj-rojo)" }}>● {a.rojo}</span>
               <span style={{ color: "var(--fj-amarillo)" }}>● {a.amarillo}</span>
               <span style={{ color: "var(--fj-verde)" }}>● {a.verde}</span>
             </div>
-            <div style={{ width: 120, height: 6, background: "var(--fj-panel2)", borderRadius: 3 }}>
-              <div style={{ height: "100%", width: `${(metric(a) / maxVal) * 100}%`, background: barColor, borderRadius: 3 }} />
+            <div
+              style={{
+                width: 120,
+                height: 6,
+                background: "var(--fj-panel2)",
+                borderRadius: 3,
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${(a.case_count / maxCases) * 100}%`,
+                  background: "var(--fj-primary)",
+                  borderRadius: 3,
+                }}
+              />
             </div>
           </div>
         ))}
       </div>
-      {totalPages > 1 && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--fj-line)" }}>
-          <span style={{ fontSize: 12.5, color: "var(--fj-ink3)" }}>
-            {start + 1}–{Math.min(start + PAGE, sorted.length)} de {sorted.length} abogados
-          </span>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Btn kind="secondary" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>Anterior</Btn>
-            <span style={{ fontSize: 12.5, color: "var(--fj-ink2)", minWidth: 48, textAlign: "center" }}>{safePage + 1} / {totalPages}</span>
-            <Btn kind="secondary" size="sm" disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)}>Siguiente</Btn>
-          </div>
-        </div>
-      )}
     </Card>
   );
 }

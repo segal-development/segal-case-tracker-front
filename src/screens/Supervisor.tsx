@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell } from "recharts";
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
@@ -10,7 +11,7 @@ import { BriefcaseIcon } from "@/components/primitives/icons";
 import { useTokenColors } from "@/hooks/useTokenColors";
 import { Splash } from "@/components/Splash";
 import { useFirmStats } from "@/hooks/useFirmStats";
-import type { FirmSemaforo } from "@/hooks/useFirmStats";
+import type { FirmSemaforo, FirmLawyerItem } from "@/hooks/useFirmStats";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -123,6 +124,111 @@ function DonutChart({ sem, total }: { sem: FirmSemaforo; total: number }) {
 
 // ─── Supervisor ───────────────────────────────────────────────────────────────
 
+// ─── RankingRiesgo: carga y riesgo por abogado (orden riesgo/carga + paginado) ──
+function RankingRiesgo({ data }: { data: FirmLawyerItem[] }) {
+  const [orden, setOrden] = useState<"riesgo" | "carga">("riesgo");
+  const [page, setPage] = useState(0);
+  const PAGE = 10;
+
+  if (data.length === 0) {
+    return (
+      <Card pad={24} elevated style={{ marginBottom: 24 }}>
+        <div style={{ fontWeight: 600, fontFamily: "var(--fj-heading)", fontSize: 16, marginBottom: 20 }}>
+          Carga y riesgo por abogado
+        </div>
+        <div style={{ textAlign: "center", color: "var(--fj-ink3)", padding: "32px 0" }}>
+          Sin abogados registrados
+        </div>
+      </Card>
+    );
+  }
+
+  const sorted = [...data].sort((a, b) =>
+    orden === "riesgo" ? b.rojo - a.rojo || b.case_count - a.case_count : b.case_count - a.case_count,
+  );
+  const metric = (a: FirmLawyerItem) => (orden === "riesgo" ? a.rojo : a.case_count);
+  const maxVal = Math.max(...sorted.map(metric), 1);
+  const barColor = orden === "riesgo" ? "var(--fj-rojo)" : "var(--fj-primary)";
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE));
+  const safePage = Math.min(page, totalPages - 1);
+  const start = safePage * PAGE;
+  const pageItems = sorted.slice(start, start + PAGE);
+
+  const tab = (key: "riesgo" | "carga", label: string) => (
+    <button
+      onClick={() => { setOrden(key); setPage(0); }}
+      style={{
+        padding: "5px 12px", borderRadius: 999, cursor: "pointer", fontSize: 12.5,
+        fontFamily: "var(--fj-body)", fontWeight: 500,
+        border: `1px solid ${orden === key ? "var(--fj-line-strong)" : "var(--fj-line)"}`,
+        background: orden === key ? "var(--fj-panel)" : "transparent",
+        color: orden === key ? "var(--fj-ink)" : "var(--fj-ink3)",
+      }}
+    >
+      {label}
+    </button>
+  );
+
+  return (
+    <Card pad={24} elevated style={{ marginBottom: 24 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ fontWeight: 600, fontFamily: "var(--fj-heading)", fontSize: 16 }}>
+          Carga y riesgo por abogado
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <span style={{ fontSize: 11.5, color: "var(--fj-ink3)", alignSelf: "center", marginRight: 2 }}>Ordenar por</span>
+          {tab("riesgo", "Riesgo")}
+          {tab("carga", "Carga")}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {pageItems.map((lawyer, i) => (
+          <div
+            key={lawyer.rut}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "auto auto 1fr auto auto auto",
+              gap: 16,
+              alignItems: "center",
+              padding: "10px 0",
+              borderBottom: i < pageItems.length - 1 ? "1px solid var(--fj-line)" : "none",
+            }}
+          >
+            <span style={{ fontSize: 12, color: "var(--fj-ink3)", fontVariantNumeric: "tabular-nums", width: 20, textAlign: "right" }}>
+              {start + i + 1}
+            </span>
+            <Avatar iniciales={getInitials(lawyer.nombre)} color={rutToColor(lawyer.rut)} nombre={lawyer.nombre} size={36} />
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 500 }}>{lawyer.nombre}</div>
+              <div style={{ fontSize: 12, color: "var(--fj-ink3)" }}>{lawyer.case_count} causas</div>
+            </div>
+            <Pill tone={lawyer.rojo > 0 ? "rojo" : "verde"}>{lawyer.rojo} en rojo</Pill>
+            <div style={{ fontSize: 12, color: "var(--fj-ink3)", textAlign: "right", whiteSpace: "nowrap" }}>
+              {lawyer.stale} estancadas
+            </div>
+            <div style={{ width: 100, height: 6, background: "var(--fj-panel2)", borderRadius: 3 }}>
+              <div style={{ height: "100%", width: `${(metric(lawyer) / maxVal) * 100}%`, background: barColor, borderRadius: 3 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      {totalPages > 1 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--fj-line)" }}>
+          <span style={{ fontSize: 12.5, color: "var(--fj-ink3)" }}>
+            {start + 1}–{Math.min(start + PAGE, sorted.length)} de {sorted.length} abogados
+          </span>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <Btn kind="secondary" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>Anterior</Btn>
+            <span style={{ fontSize: 12.5, color: "var(--fj-ink2)", minWidth: 48, textAlign: "center" }}>{safePage + 1} / {totalPages}</span>
+            <Btn kind="secondary" size="sm" disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)}>Siguiente</Btn>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function Supervisor() {
   const navigate = useNavigate();
   const { data: stats, isLoading } = useFirmStats();
@@ -134,8 +240,6 @@ export function Supervisor() {
     { s: "amarillo" as const, label: "Atención", n: stats.totals.semaforo.amarillo },
     { s: "verde" as const,    label: "Al día",   n: stats.totals.semaforo.verde },
   ];
-
-  const maxCases = Math.max(...stats.by_lawyer.map((l) => l.case_count), 1);
 
   const today = new Date().toLocaleDateString("es-CL", {
     weekday: "long",
@@ -332,104 +436,7 @@ export function Supervisor() {
       </Card>
 
       {/* Carga y riesgo por abogado */}
-      <Card pad={24} elevated style={{ marginBottom: 24 }}>
-        <div
-          style={{
-            fontWeight: 600,
-            fontFamily: "var(--fj-heading)",
-            fontSize: 16,
-            marginBottom: 20,
-          }}
-        >
-          Carga y riesgo por abogado
-        </div>
-        {stats.by_lawyer.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              color: "var(--fj-ink3)",
-              padding: "32px 0",
-            }}
-          >
-            Sin abogados registrados
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {stats.by_lawyer.map((lawyer, idx) => (
-              <div
-                key={lawyer.rut}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "auto auto 1fr auto auto auto",
-                  gap: 16,
-                  alignItems: "center",
-                  padding: "10px 0",
-                  borderBottom:
-                    idx < stats.by_lawyer.length - 1
-                      ? "1px solid var(--fj-line)"
-                      : "none",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "var(--fj-ink3)",
-                    fontVariantNumeric: "tabular-nums",
-                    width: 20,
-                    textAlign: "right",
-                  }}
-                >
-                  {idx + 1}
-                </span>
-                <Avatar
-                  iniciales={getInitials(lawyer.nombre)}
-                  color={rutToColor(lawyer.rut)}
-                  nombre={lawyer.nombre}
-                  size={36}
-                />
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>
-                    {lawyer.nombre}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--fj-ink3)" }}>
-                    {lawyer.case_count} causas
-                  </div>
-                </div>
-                <Pill tone={lawyer.rojo > 0 ? "rojo" : "verde"}>
-                  {lawyer.rojo} en rojo
-                </Pill>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "var(--fj-ink3)",
-                    textAlign: "right",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {lawyer.stale} estancadas
-                </div>
-                <div
-                  style={{
-                    width: 100,
-                    height: 6,
-                    background: "var(--fj-panel2)",
-                    borderRadius: 3,
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      width: `${(lawyer.case_count / maxCases) * 100}%`,
-                      background: "var(--fj-primary)",
-                      borderRadius: 3,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+      <RankingRiesgo data={stats.by_lawyer} />
 
       {/* Composición por materia */}
       {stats.totals.by_materia.length > 0 && (
