@@ -38,6 +38,8 @@ export interface Causa {
   next_deadline_at?: string | null;
   /** Art. 152/153 CPC — case dormant long enough that the defense may request abandono. */
   abandono_disponible?: boolean;
+  /** True when the statute of limitations has run and the defense may invoke prescripción. */
+  prescripcion_cumplida?: boolean;
   /** True when the case's next actionable deadline is fatal (irreversible — e.g. excepciones, apelación). */
   next_deadline_fatal?: boolean;
   /** True when the case reached the cuaderno de apremio (enforcement: embargo, remate). */

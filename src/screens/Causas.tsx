@@ -246,7 +246,12 @@ function CausaRow({
             En apremio
           </Pill>
         )}
-        {!c.abandono_disponible && !c.en_apremio && (
+        {c.prescripcion_cumplida && (
+          <Pill tone="rojo" subtle style={{ marginTop: c.abandono_disponible || c.en_apremio ? 4 : 0, fontSize: 10 }}>
+            Prescripción cumplida
+          </Pill>
+        )}
+        {!c.abandono_disponible && !c.en_apremio && !c.prescripcion_cumplida && (
           <span style={{ color: "var(--fj-ink3)", fontSize: 12 }}>—</span>
         )}
       </td>
@@ -405,6 +410,7 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
     sinSeguimiento: allCausas.filter((c) => c.semaforo === null).length,
     abandono:       allCausas.filter((c) => c.abandono_disponible).length,
     apremio:        allCausas.filter((c) => c.en_apremio).length,
+    prescripcion:   allCausas.filter((c) => c.prescripcion_cumplida).length,
     total:          allCausas.length,
   }), [allCausas]);
 
@@ -417,6 +423,8 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
           if (!c.abandono_disponible) return false;
         } else if (sem === "apremio") {
           if (!c.en_apremio) return false;
+        } else if (sem === "prescripcion") {
+          if (!c.prescripcion_cumplida) return false;
         } else if (c.semaforo !== (sem as SemaforoColor)) return false;
       }
       if (trib !== "todos" && c.tribunal !== trib) return false;
@@ -506,6 +514,10 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
         <SemChip
           label="En apremio" n={semCount.apremio}
           active={sem === "apremio"} onClick={() => setSem("apremio")}
+        />
+        <SemChip
+          label="Prescripción cumplida" n={semCount.prescripcion}
+          active={sem === "prescripcion"} onClick={() => setSem("prescripcion")}
         />
       </div>
 

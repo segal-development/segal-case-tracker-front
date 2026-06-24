@@ -31,6 +31,7 @@ export interface CaseResponse {
   semaforo: string | null;
   next_deadline_at: string | null;
   abandono_disponible?: boolean;
+  prescripcion_cumplida?: boolean;
   next_deadline_fatal?: boolean;
   en_apremio?: boolean;
 }
@@ -105,6 +106,7 @@ export function caseToCausa(c: CaseResponse, abogado?: Abogado): Causa {
     procedural_state: c.procedural_state ?? undefined,
     next_deadline_at: c.next_deadline_at ?? null,
     abandono_disponible: c.abandono_disponible ?? false,
+    prescripcion_cumplida: c.prescripcion_cumplida ?? false,
     next_deadline_fatal: c.next_deadline_fatal ?? false,
     en_apremio: c.en_apremio ?? false,
   };
