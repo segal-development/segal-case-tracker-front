@@ -233,6 +233,53 @@ export function ComoFunciona() {
         </div>
       </div>
 
+      {/* Hacia adelante */}
+      <div style={{ padding: "56px 0", background: "var(--fj-panel2)" }}>
+        <div style={section}>
+          <div style={kicker}>Hacia adelante</div>
+          <h2 style={h2}>¿Y si no puede haber un equipo dedicado?</h2>
+          <p style={{ ...lead, maxWidth: 760, marginBottom: 12 }}>
+            El único requisito técnico es que el monitoreo salga a internet con una{" "}
+            <strong>conexión de tipo hogareña</strong> (no desde un servidor), porque el PJUD
+            bloquea a los servidores de nube. Ese requisito se puede cumplir de más de una forma —
+            el sistema no depende de un único equipo:
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginTop: 18 }}>
+            <Card style={{ borderTop: "3px solid var(--fj-verde)" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".05em", color: "var(--fj-verde)", marginBottom: 8 }}>HOY</div>
+              <div style={{ fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 16, marginBottom: 6 }}>Equipo dedicado en el estudio</div>
+              <div style={{ fontSize: 13.5, color: "var(--fj-ink2)", lineHeight: 1.55 }}>
+                Un mini-computador siempre encendido en la oficina. Es lo más simple, probado y
+                económico — sin costos mensuales de terceros. Así está funcionando ahora.
+              </div>
+            </Card>
+            <Card style={{ borderTop: "3px solid var(--fj-primary)" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".05em", color: "var(--fj-primary)", marginBottom: 8 }}>PLAN B — SIN HARDWARE</div>
+              <div style={{ fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 16, marginBottom: 6 }}>En la nube, con conexión residencial</div>
+              <div style={{ fontSize: 13.5, color: "var(--fj-ink2)", lineHeight: 1.55 }}>
+                Si el estudio prefiere no tener un equipo físico, el monitoreo corre en un
+                servidor en la nube que sale a internet a través de una conexión residencial
+                contratada. No requiere ningún equipo en la oficina; tiene un costo mensual
+                por ese servicio y una validación técnica previa.
+              </div>
+            </Card>
+            <Card style={{ borderTop: "3px solid var(--fj-amarillo)" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".05em", color: "var(--fj-amarillo)", marginBottom: 8 }}>CRECIMIENTO</div>
+              <div style={{ fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 16, marginBottom: 6 }}>Más Clave Únicas = más automático</div>
+              <div style={{ fontSize: 13.5, color: "var(--fj-ink2)", lineHeight: 1.55 }}>
+                A medida que más abogados comparten su Clave Única, más causas se actualizan
+                solas — sin ninguna intervención humana. El sistema escala sin agregar trabajo manual.
+              </div>
+            </Card>
+          </div>
+          <p style={{ fontSize: 13, color: "var(--fj-ink3)", marginTop: 18, maxWidth: 760 }}>
+            En resumen: el equipo dedicado es hoy la opción más costo-eficiente y ya validada;
+            la nube con conexión residencial es el plan B inmediato si se decide no tener
+            hardware en la oficina. La arquitectura es la misma — solo cambia desde dónde sale a internet.
+          </p>
+        </div>
+      </div>
+
       {/* Capacidades */}
       <div style={{ padding: "48px 0 64px", background: "var(--fj-ink)", color: "#fff" }}>
         <div style={section}>
