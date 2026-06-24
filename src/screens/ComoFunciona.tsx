@@ -280,6 +280,53 @@ export function ComoFunciona() {
         </div>
       </div>
 
+      {/* Cómo lo hace la industria */}
+      <div style={{ padding: "56px 0" }}>
+        <div style={section}>
+          <div style={kicker}>Comparación</div>
+          <h2 style={h2}>Cómo lo hace la industria — y por qué nuestro enfoque es más sostenible</h2>
+          <p style={{ ...lead, maxWidth: 760, marginBottom: 24 }}>
+            Las plataformas que ofrecen este servicio (como las legaltech del mercado) no tienen
+            equipos en oficinas: operan en la nube. Para que el PJUD no las bloquee, recurren a una
+            cadena de servicios pagos — y a un mantenimiento constante.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+            <Card style={{ borderTop: "3px solid var(--fj-ink3)" }}>
+              <div style={{ fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 17, marginBottom: 12 }}>La industria (nube a escala)</div>
+              {[
+                ["Proxies residenciales", "Alquilan millones de conexiones hogareñas para que su tráfico no se vea como un servidor. Costo mensual por volumen."],
+                ["Navegadores anti-detección", "Software que falsifica la identidad del navegador para parecer un usuario real."],
+                ["Resolvedores de captcha", "Servicios que sortean el captcha de forma automática (incluyendo granjas humanas)."],
+                ["Mantenimiento permanente", "El PJUD se actualiza seguido y rompe estos trucos: requiere un equipo parchando casi cada semana."],
+              ].map(([t, d]) => (
+                <div key={t} style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                  <span style={{ color: "var(--fj-ink3)", flexShrink: 0 }}>•</span>
+                  <div><strong style={{ fontSize: 14 }}>{t}.</strong> <span style={{ fontSize: 13.5, color: "var(--fj-ink2)", lineHeight: 1.5 }}>{d}</span></div>
+                </div>
+              ))}
+            </Card>
+            <Card style={{ borderTop: "3px solid var(--fj-verde)" }}>
+              <div style={{ fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 17, marginBottom: 12 }}>Nuestro enfoque</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {[
+                  ["Credenciales legítimas", "Usamos la Clave Única real (del estudio o del abogado), no trucos para colarse. Es acceso autorizado."],
+                  ["Conexión residencial propia", "Un equipo del estudio (o, a futuro, una conexión contratada) — sin depender de proxies de terceros."],
+                  ["Sin resolver captchas", "La Clave Única no pide captcha; lo poco que lo necesita lo hace una persona del estudio, puntualmente."],
+                  ["Más robusto en el tiempo", "Al no depender de 'engañar' al PJUD sino de entrar legítimamente, hay mucho menos que se rompa cuando el sitio cambia."],
+                ].map(([t, d]) => (
+                  <Check key={t}><strong>{t}.</strong> {d}</Check>
+                ))}
+              </div>
+            </Card>
+          </div>
+          <p style={{ fontSize: 13, color: "var(--fj-ink3)", marginTop: 18, maxWidth: 760 }}>
+            En síntesis: el camino de la industria es más "infinitamente escalable", pero más caro y
+            frágil (un gato y ratón constante). El nuestro, al apoyarse en accesos legítimos, es más
+            simple, más barato y más estable — y puede crecer a la nube el día que se necesite.
+          </p>
+        </div>
+      </div>
+
       {/* Capacidades */}
       <div style={{ padding: "48px 0 64px", background: "var(--fj-ink)", color: "#fff" }}>
         <div style={section}>
