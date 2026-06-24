@@ -13,7 +13,7 @@ import { useNovedades } from "@/novedades/useNovedades";
 
 const pageCss: CSSProperties = {
   padding: "36px 40px 56px",
-  maxWidth: 1320,
+  maxWidth: 1600,
   margin: "0 auto",
 };
 
