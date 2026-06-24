@@ -414,6 +414,17 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
     total:          allCausas.length,
   }), [allCausas]);
 
+  // Real tribunals/materias present in the firm's cases (not a fixed list),
+  // deduped + alphabetically sorted (es locale).
+  const tribunalOptions = useMemo(
+    () => [...new Set(allCausas.map((c) => c.tribunal).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")),
+    [allCausas],
+  );
+  const materiaOptions = useMemo(
+    () => [...new Set(allCausas.map((c) => c.materia).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")),
+    [allCausas],
+  );
+
   const filtered = useMemo(() => {
     return allCausas.filter((c) => {
       if (sem !== "todas") {
@@ -661,6 +672,8 @@ export function Causas({ onNuevaCausa = () => undefined }: CausasProps) {
           trib={trib} setTrib={setTrib}
           mat={mat} setMat={setMat}
           onReset={() => { setTrib("todos"); setMat("todas"); }}
+          tribunales={tribunalOptions}
+          materias={materiaOptions}
         />
       )}
     </div>

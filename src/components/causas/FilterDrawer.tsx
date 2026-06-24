@@ -3,7 +3,6 @@ import { X, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Btn } from "@/components/primitives/Btn";
-import { TRIBUNALES, MATERIAS } from "@/data/mock";
 import {
   Select,
   SelectContent,
@@ -22,6 +21,9 @@ export interface FilterDrawerProps {
   mat: string;
   setMat: (v: string) => void;
   onReset: () => void;
+  /** Real tribunals/materias derived from the loaded cases (not a fixed list). */
+  tribunales: string[];
+  materias: string[];
 }
 
 const kickerCss: CSSProperties = {
@@ -95,7 +97,7 @@ function DateField({
 }
 
 export function FilterDrawer({
-  onClose, trib, setTrib, mat, setMat, onReset,
+  onClose, trib, setTrib, mat, setMat, onReset, tribunales, materias,
 }: FilterDrawerProps) {
   const [fechaDesde, setFechaDesde] = useState<Date | undefined>(new Date(2025, 0, 1));
   const [fechaHasta, setFechaHasta] = useState<Date | undefined>(new Date(2026, 4, 15));
@@ -148,7 +150,7 @@ export function FilterDrawer({
             placeholder="Todos los tribunales"
             options={[
               ["todos", "Todos los tribunales"],
-              ...TRIBUNALES.map((t): [string, string] => [t, t]),
+              ...tribunales.map((t): [string, string] => [t, t]),
             ]}
           />
           <FilterSelect
@@ -158,7 +160,7 @@ export function FilterDrawer({
             placeholder="Todas las materias"
             options={[
               ["todas", "Todas las materias"],
-              ...MATERIAS.map((m): [string, string] => [m, m]),
+              ...materias.map((m): [string, string] => [m, m]),
             ]}
           />
 
