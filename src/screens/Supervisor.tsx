@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Chart as ChartJS, ArcElement, Tooltip as ChartTooltip } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip as ChartTooltip } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Bar } from "react-chartjs-2";
 
-ChartJS.register(ArcElement, ChartTooltip);
-import { SemaforoRing } from "@/components/primitives/SemaforoRing";
+ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTooltip, ChartDataLabels);
 import { Avatar } from "@/components/primitives/Avatar";
 import { Pill } from "@/components/primitives/Pill";
 import { Btn } from "@/components/primitives/Btn";
@@ -62,7 +62,7 @@ const STAGE_LABELS: Record<string, string> = {
 
 // ─── DonutChart ───────────────────────────────────────────────────────────────
 
-function DonutChart({ sem, total }: { sem: FirmSemaforo; total: number }) {
+function SemaforoBar({ sem, total }: { sem: FirmSemaforo; total: number }) {
   const colors = useTokenColors();
   const data = {
     labels: ["Crítico", "Atención", "Al día", "Otros"],
@@ -70,52 +70,50 @@ function DonutChart({ sem, total }: { sem: FirmSemaforo; total: number }) {
       {
         data: [sem.rojo, sem.amarillo, sem.verde, sem.otros],
         backgroundColor: [colors.rojo, colors.amarillo, colors.verde, colors.ink3 ?? "#8a93a6"],
-        borderWidth: 0,
-        hoverOffset: 5,
+        borderRadius: 6,
+        borderSkipped: false,
+        maxBarThickness: 96,
       },
     ],
   };
   const options: any = {
-    cutout: "70%",
     responsive: true,
     maintainAspectRatio: false,
+    layout: { padding: { top: 22 } },
     plugins: {
       legend: { display: false },
-      datalabels: { display: false },
+      datalabels: {
+        anchor: "end", align: "end", offset: 2,
+        color: "#0a0e1a",
+        font: { weight: 600, size: 13 },
+        formatter: (v: number) => v,
+      },
       tooltip: {
-        backgroundColor: "rgba(10,14,26,0.92)",
-        padding: 9,
-        cornerRadius: 6,
-        displayColors: false,
+        backgroundColor: "rgba(10,14,26,0.92)", padding: 9, cornerRadius: 6, displayColors: false,
         callbacks: {
-          label: (c: any) => {
-            const pct = total > 0 ? Math.round((c.parsed / total) * 100) : 0;
-            return `${c.label}: ${c.parsed} (${pct}%)`;
-          },
+          label: (c: any) => `${c.parsed} causas (${total > 0 ? Math.round((c.parsed / total) * 100) : 0}%)`,
         },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false }, border: { display: false },
+        ticks: { color: colors.ink3 ?? "#6b7686", font: { size: 12.5 } },
+      },
+      y: {
+        beginAtZero: true, grace: "8%", border: { display: false },
+        grid: { color: "rgba(0,0,0,0.06)" },
+        ticks: { color: colors.ink3 ?? "#6b7686", font: { size: 11 }, maxTicksLimit: 6, precision: 0 },
       },
     },
   };
   return (
-    <div style={{ position: "relative", width: 160, height: 160, flexShrink: 0 }}>
-      <Doughnut data={data} options={options} />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}
-      >
-        <div style={{ fontSize: 28, fontWeight: 700, fontFamily: "var(--fj-heading)", lineHeight: 1 }}>
-          {total}
-        </div>
-        <div style={{ fontSize: 11, color: "var(--fj-ink3)", fontFamily: "var(--fj-body)", marginTop: 2 }}>
-          causas
-        </div>
+    <div>
+      <div style={{ fontSize: 12.5, color: "var(--fj-ink3)", marginBottom: 10 }}>
+        {total} causas en total
+      </div>
+      <div style={{ height: 280 }}>
+        <Bar data={data} options={options} />
       </div>
     </div>
   );
@@ -234,12 +232,6 @@ export function Supervisor() {
 
   if (isLoading || !stats) return <Splash inline label="Cargando métricas del estudio" />;
 
-  const riskRows = [
-    { s: "rojo" as const,     label: "Crítico",  n: stats.totals.semaforo.rojo },
-    { s: "amarillo" as const, label: "Atención", n: stats.totals.semaforo.amarillo },
-    { s: "verde" as const,    label: "Al día",   n: stats.totals.semaforo.verde },
-  ];
-
   const today = new Date().toLocaleDateString("es-CL", {
     weekday: "long",
     day: "numeric",
@@ -348,90 +340,7 @@ export function Supervisor() {
         >
           Semáforo del estudio
         </div>
-        <div style={{ display: "flex", gap: 40, alignItems: "center" }}>
-          <DonutChart sem={stats.totals.semaforo} total={stats.totals.cases} />
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
-          >
-            {riskRows.map(({ s, label, n }) => {
-              const pct =
-                stats.totals.cases > 0
-                  ? Math.round((n / stats.totals.cases) * 100)
-                  : 0;
-              return (
-                <div
-                  key={s}
-                  style={{ display: "flex", alignItems: "center", gap: 12 }}
-                >
-                  <SemaforoRing status={s} size={20} />
-                  <span style={{ flex: 1, fontSize: 14 }}>{label}</span>
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      fontSize: 14,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {n}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: "var(--fj-ink3)",
-                      width: 36,
-                      textAlign: "right",
-                    }}
-                  >
-                    {pct}%
-                  </span>
-                </div>
-              );
-            })}
-            {stats.totals.semaforo.otros > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: "50%",
-                    background: "var(--fj-ink3)",
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ flex: 1, fontSize: 14 }}>Otros</span>
-                <span
-                  style={{
-                    fontWeight: 600,
-                    fontSize: 14,
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {stats.totals.semaforo.otros}
-                </span>
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "var(--fj-ink3)",
-                    width: 36,
-                    textAlign: "right",
-                  }}
-                >
-                  {stats.totals.cases > 0
-                    ? Math.round(
-                        (stats.totals.semaforo.otros / stats.totals.cases) * 100
-                      )
-                    : 0}
-                  %
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <SemaforoBar sem={stats.totals.semaforo} total={stats.totals.cases} />
       </Card>
 
       {/* Carga y riesgo por abogado */}
