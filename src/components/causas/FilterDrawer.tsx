@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from "react";
-import { X, Calendar as CalendarIcon } from "lucide-react";
+import { X, Calendar as CalendarIcon, ChevronsUpDown, Check } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Btn } from "@/components/primitives/Btn";
@@ -75,6 +75,87 @@ function FilterSelect({
   );
 }
 
+/** Like FilterSelect but with a search box — for long option lists (tribunals). */
+function SearchableSelect({
+  label, value, onChange, options, placeholder, searchPlaceholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<[string, string]>;
+  placeholder: string;
+  searchPlaceholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const selected = options.find(([v]) => v === value);
+  const filtered = query.trim()
+    ? options.filter(([, t]) => t.toLowerCase().includes(query.trim().toLowerCase()))
+    : options;
+
+  const itemCss: CSSProperties = {
+    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+    width: "100%", padding: "8px 12px", border: 0, background: "transparent",
+    cursor: "pointer", textAlign: "left", fontFamily: "var(--fj-body)", fontSize: 13,
+    color: "var(--fj-ink)",
+  };
+
+  return (
+    <div>
+      <label style={labelCss}>{label}</label>
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQuery(""); }}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="w-full justify-between font-normal">
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {selected ? selected[1] : placeholder}
+            </span>
+            <ChevronsUpDown size={15} style={{ opacity: 0.5, flexShrink: 0 }} />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="p-0 z-[100]"
+          align="start"
+          style={{ width: "var(--radix-popover-trigger-width)" }}
+        >
+          <div style={{ padding: 8, borderBottom: "1px solid var(--fj-line)" }}>
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={searchPlaceholder}
+              style={{
+                width: "100%", height: 32, padding: "0 10px", borderRadius: 6,
+                border: "1px solid var(--fj-line-strong)", background: "var(--fj-panel)",
+                fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink)",
+                outline: "none", boxSizing: "border-box",
+              }}
+            />
+          </div>
+          <div style={{ maxHeight: 260, overflowY: "auto", padding: 4 }}>
+            {filtered.map(([v, t]) => (
+              <button
+                key={v}
+                onClick={() => { onChange(v); setOpen(false); setQuery(""); }}
+                style={{ ...itemCss, borderRadius: 6, background: v === value ? "var(--fj-panel2)" : "transparent" }}
+                onMouseEnter={(e) => { if (v !== value) e.currentTarget.style.background = "var(--fj-panel2)"; }}
+                onMouseLeave={(e) => { if (v !== value) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t}</span>
+                {v === value && <Check size={15} style={{ flexShrink: 0, color: "var(--fj-primary)" }} />}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <div style={{ padding: "12px", fontSize: 12.5, color: "var(--fj-ink3)", textAlign: "center" }}>
+                Sin resultados
+              </div>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 function DateField({
   date, onSelect,
 }: {
@@ -143,11 +224,12 @@ export function FilterDrawer({
           flex: 1, overflowY: "auto", padding: "20px 24px",
           display: "flex", flexDirection: "column", gap: 20,
         }}>
-          <FilterSelect
+          <SearchableSelect
             label="Tribunal"
             value={trib}
             onChange={setTrib}
             placeholder="Todos los tribunales"
+            searchPlaceholder="Buscar tribunal…"
             options={[
               ["todos", "Todos los tribunales"],
               ...tribunales.map((t): [string, string] => [t, t]),
