@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PieChart, Pie, Cell } from "recharts";
+import { Chart as ChartJS, ArcElement, Tooltip as ChartTooltip } from "chart.js";
+import { Doughnut } from "react-chartjs-2";
+
+ChartJS.register(ArcElement, ChartTooltip);
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Pill } from "@/components/primitives/Pill";
@@ -61,31 +64,41 @@ const STAGE_LABELS: Record<string, string> = {
 
 function DonutChart({ sem, total }: { sem: FirmSemaforo; total: number }) {
   const colors = useTokenColors();
-  const data = [
-    { value: sem.rojo,     fill: colors.rojo },
-    { value: sem.amarillo, fill: colors.amarillo },
-    { value: sem.verde,    fill: colors.verde },
-    { value: sem.otros,    fill: colors.ink3 ?? "#aaa" },
-  ];
+  const data = {
+    labels: ["Crítico", "Atención", "Al día", "Otros"],
+    datasets: [
+      {
+        data: [sem.rojo, sem.amarillo, sem.verde, sem.otros],
+        backgroundColor: [colors.rojo, colors.amarillo, colors.verde, colors.ink3 ?? "#8a93a6"],
+        borderWidth: 0,
+        hoverOffset: 5,
+      },
+    ],
+  };
+  const options: any = {
+    cutout: "70%",
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { display: false },
+      tooltip: {
+        backgroundColor: "rgba(10,14,26,0.92)",
+        padding: 9,
+        cornerRadius: 6,
+        displayColors: false,
+        callbacks: {
+          label: (c: any) => {
+            const pct = total > 0 ? Math.round((c.parsed / total) * 100) : 0;
+            return `${c.label}: ${c.parsed} (${pct}%)`;
+          },
+        },
+      },
+    },
+  };
   return (
     <div style={{ position: "relative", width: 160, height: 160, flexShrink: 0 }}>
-      <PieChart width={160} height={160}>
-        <Pie
-          data={data}
-          cx={80}
-          cy={80}
-          innerRadius={55}
-          outerRadius={75}
-          dataKey="value"
-          startAngle={90}
-          endAngle={-270}
-          strokeWidth={0}
-        >
-          {data.map((entry, i) => (
-            <Cell key={i} fill={entry.fill} />
-          ))}
-        </Pie>
-      </PieChart>
+      <Doughnut data={data} options={options} />
       <div
         style={{
           position: "absolute",
@@ -97,24 +110,10 @@ function DonutChart({ sem, total }: { sem: FirmSemaforo; total: number }) {
           pointerEvents: "none",
         }}
       >
-        <div
-          style={{
-            fontSize: 28,
-            fontWeight: 700,
-            fontFamily: "var(--fj-heading)",
-            lineHeight: 1,
-          }}
-        >
+        <div style={{ fontSize: 28, fontWeight: 700, fontFamily: "var(--fj-heading)", lineHeight: 1 }}>
           {total}
         </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: "var(--fj-ink3)",
-            fontFamily: "var(--fj-body)",
-            marginTop: 2,
-          }}
-        >
+        <div style={{ fontSize: 11, color: "var(--fj-ink3)", fontFamily: "var(--fj-body)", marginTop: 2 }}>
           causas
         </div>
       </div>
