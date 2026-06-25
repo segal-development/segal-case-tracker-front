@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { X } from "lucide-react";
 import { Wordmark } from "@/components/primitives/Wordmark";
@@ -75,6 +75,21 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Real firm semáforo counts (public, no-auth). Starts with the static values as
+  // a fallback so the marquee NEVER breaks if the endpoint is slow or unavailable.
+  const [sem, setSem] = useState({ rojo: SEMAFORO.rojo, amarillo: SEMAFORO.amarillo, verde: SEMAFORO.verde });
+  useEffect(() => {
+    const base = import.meta.env.VITE_API_BASE as string;
+    fetch(`${base}/stats/public-overview`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && typeof d.rojo === "number") {
+          setSem({ rojo: d.rojo, amarillo: d.amarillo, verde: d.verde });
+        }
+      })
+      .catch(() => { /* keep the fallback values */ });
+  }, []);
+
   const submit = async (e?: FormEvent) => {
     e?.preventDefault();
     if (!email.includes("@")) { setErr("Ingresa un correo válido"); return; }
@@ -91,9 +106,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   const semaforoItems = [
-    { s: "rojo" as const,     n: SEMAFORO.rojo,     t: "Crítico"  },
-    { s: "amarillo" as const, n: SEMAFORO.amarillo, t: "Atención" },
-    { s: "verde" as const,    n: SEMAFORO.verde,    t: "Al día"   },
+    { s: "rojo" as const,     n: sem.rojo,     t: "Crítico"  },
+    { s: "amarillo" as const, n: sem.amarillo, t: "Atención" },
+    { s: "verde" as const,    n: sem.verde,    t: "Al día"   },
   ];
 
   return (
