@@ -11,6 +11,7 @@ import { useRole } from "@/hooks/useRole";
 import { CAUSAS, RESUMEN_PLAZOS, ADMIN } from "@/data/mock";
 import type { Role } from "@/hooks/useRole";
 import { useNovedades } from "@/novedades/useNovedades";
+import { useMe } from "@/hooks/useMe";
 
 interface NavItem {
   path: string;
@@ -20,9 +21,19 @@ interface NavItem {
   badgeTone?: "rojo" | "neutral";
 }
 
-function getNavItems(role: Role, novedadesCount: number): NavItem[] {
+function getNavItems(role: Role, novedadesCount: number, isAuditor: boolean): NavItem[] {
   const causasBadge = CAUSAS.length;
   const plazosBadge = RESUMEN_PLAZOS.proximos + RESUMEN_PLAZOS.vencidos;
+
+  // The auditor is a deadline-control role — no productividad/reportes.
+  if (isAuditor) {
+    return [
+      { path: "/",          label: "Dashboard", icon: <Home size={17} strokeWidth={1.6} /> },
+      { path: "/novedades", label: "Novedades", icon: <Bell size={17} strokeWidth={1.6} />, badge: novedadesCount },
+      { path: "/causas",    label: "Causas",    icon: <Briefcase size={17} strokeWidth={1.6} />, badge: causasBadge },
+      { path: "/plazos",    label: "Plazos",    icon: <Clock size={17} strokeWidth={1.6} />, badge: plazosBadge, badgeTone: "rojo" },
+    ];
+  }
 
   if (role === "supervisor") {
     return [
@@ -70,10 +81,12 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const { role } = useRole();
+  const { data: me } = useMe();
+  const isAuditor = me?.role === "auditor";
   const location = useLocation();
   const navigate = useNavigate();
   const { count: novedadesCount } = useNovedades();
-  const items = getNavItems(role, novedadesCount);
+  const items = getNavItems(role, novedadesCount, isAuditor);
 
   const activePath = location.pathname;
 
