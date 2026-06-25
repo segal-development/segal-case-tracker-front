@@ -373,7 +373,11 @@ export function Dashboard() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      await queryClient.invalidateQueries();
+      // Min 700ms so the spinner is actually visible even if the refetch is instant.
+      await Promise.all([
+        queryClient.invalidateQueries(),
+        new Promise((r) => setTimeout(r, 700)),
+      ]);
     } finally {
       setSyncing(false);
     }
@@ -452,7 +456,10 @@ export function Dashboard() {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <Btn icon={<Search size={15} strokeWidth={1.6} />} kind="secondary" onClick={() => navigate("/causas")}>Buscar causa</Btn>
-          <Btn icon={<RefreshCw size={15} strokeWidth={1.6} />} kind="secondary" onClick={handleSync} disabled={syncing}>
+          <Btn
+            icon={<RefreshCw size={15} strokeWidth={1.6} style={syncing ? { animation: "fj-rot 0.8s linear infinite" } : undefined} />}
+            kind="secondary" onClick={handleSync} disabled={syncing}
+          >
             {syncing ? "Sincronizando…" : "Sincronizar"}
           </Btn>
         </div>
