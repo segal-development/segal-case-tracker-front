@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RefreshCw, Search, Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { RefreshCw, Search } from "lucide-react";
 import { SemaforoRing } from "@/components/primitives/SemaforoRing";
 import { Card } from "@/components/primitives/Card";
 import { KPI } from "@/components/primitives/KPI";
@@ -365,6 +366,18 @@ export function Dashboard() {
   const { data: causas = [], isLoading } = useCausas();
   const { data: goals } = useGoals();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
+  // No scraping is triggered from the web (PJUD blocks cloud IPs — Carla does the
+  // scraping on the residential machine). "Sincronizar" re-pulls the latest data.
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await queryClient.invalidateQueries();
+    } finally {
+      setSyncing(false);
+    }
+  };
   const { abogado } = useSelectedLawyer();
   const firstName = abogado ? abogado.nombre.split(/\s+/)[0] ?? "—" : "—";
   const todayLabel = fmtDashboardDate(new Date());
@@ -438,9 +451,10 @@ export function Dashboard() {
           )}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <Btn icon={<Search size={15} strokeWidth={1.6} />} kind="secondary">Buscar causa</Btn>
-          <Btn icon={<RefreshCw size={15} strokeWidth={1.6} />} kind="secondary">Sincronizar</Btn>
-          <Btn icon={<Plus size={15} strokeWidth={1.6} />} kind="primary">Nueva causa</Btn>
+          <Btn icon={<Search size={15} strokeWidth={1.6} />} kind="secondary" onClick={() => navigate("/causas")}>Buscar causa</Btn>
+          <Btn icon={<RefreshCw size={15} strokeWidth={1.6} />} kind="secondary" onClick={handleSync} disabled={syncing}>
+            {syncing ? "Sincronizando…" : "Sincronizar"}
+          </Btn>
         </div>
       </div>
 

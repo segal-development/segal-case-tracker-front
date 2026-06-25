@@ -12,6 +12,7 @@ import { CAUSAS, RESUMEN_PLAZOS, ADMIN } from "@/data/mock";
 import type { Role } from "@/hooks/useRole";
 import { useNovedades } from "@/novedades/useNovedades";
 import { useMe } from "@/hooks/useMe";
+import { useLastSync, syncTimeAgo } from "@/hooks/useLastSync";
 
 interface NavItem {
   path: string;
@@ -83,6 +84,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const { role } = useRole();
   const { data: me } = useMe();
   const isAuditor = me?.role === "auditor";
+  const { data: lastSync } = useLastSync();
   const location = useLocation();
   const navigate = useNavigate();
   const { count: novedadesCount } = useNovedades();
@@ -191,7 +193,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
               }}>Sincronización</span>
             </div>
             <div style={{ fontFamily: "var(--fj-body)", fontSize: 11.5, color: "var(--fj-ink3)", lineHeight: 1.4 }}>
-              Última conexión PJUD: <strong style={{ color: "var(--fj-ink2)" }}>hace 12 min</strong>
+              Última conexión PJUD: <strong style={{ color: "var(--fj-ink2)" }}>{syncTimeAgo(lastSync?.last_activity ?? lastSync?.last_sync)}</strong>
             </div>
           </div>
         )}
