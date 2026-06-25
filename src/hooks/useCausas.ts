@@ -16,6 +16,17 @@ interface CasesPage {
 
 const MAX_PAGES = 60;
 
+// The firm only works cases from 2021 onward (aligned with the backend's
+// DETAIL_MIN_YEAR — older cases are never detail-scraped). Hide pre-2021 cases
+// from every view so they don't show up as "sin seguimiento". Fail-open: a ROL
+// without a 4-digit year suffix is kept (never silently dropped).
+const VIEW_MIN_YEAR = 2021;
+function rolYearOk(rol: string): boolean {
+  const last = rol.split("-").pop() ?? "";
+  if (!/^\d{4}$/.test(last)) return true;
+  return parseInt(last, 10) >= VIEW_MIN_YEAR;
+}
+
 export function useCausas() {
   const { abogado } = useSelectedLawyer();
   const { data: me } = useMe();
@@ -53,7 +64,9 @@ export function useCausas() {
       const totalPages = Math.min(first.pages, MAX_PAGES);
 
       if (totalPages <= 1) {
-        return first.items.map((item) => caseToCausa(item, derivedAbogado));
+        return first.items
+          .map((item) => caseToCausa(item, derivedAbogado))
+          .filter((c) => rolYearOk(c.rol));
       }
 
       const rest = await Promise.all(
@@ -69,7 +82,7 @@ export function useCausas() {
       const unique: Causa[] = [];
       for (const item of allItems) {
         const causa = caseToCausa(item, derivedAbogado);
-        if (!seen.has(causa.id)) {
+        if (!seen.has(causa.id) && rolYearOk(causa.rol)) {
           seen.add(causa.id);
           unique.push(causa);
         }
