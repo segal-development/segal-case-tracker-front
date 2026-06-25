@@ -38,6 +38,9 @@ import imageIcon from "@/assets/file-icons/image.png";
 import { useDeadlines } from "@/hooks/useDeadlines";
 import { fmtCLP, fmtDate } from "@/lib/format";
 import type { Actuacion, Causa, Plazo } from "@/data/types";
+import { useMe } from "@/hooks/useMe";
+import { useMarkDeadline } from "@/hooks/useMarkDeadline";
+import { AgregarPlazoModal } from "@/components/modals/AgregarPlazoModal";
 
 /* ── page chrome ── */
 const pageCss: CSSProperties = {
@@ -339,11 +342,19 @@ function TabInfo({
 
 /* ── Tab: Plazos ── */
 function TabPlazos({
+  causaId: _causaId,
   plazos,
   onOpenModal,
+  canManage,
+  onMarkCumplido,
+  isMarkingPending,
 }: {
+  causaId: string;
   plazos: Plazo[];
   onOpenModal: (modal: string) => void;
+  canManage: boolean;
+  onMarkCumplido: (deadlineId: number) => void;
+  isMarkingPending: boolean;
 }) {
   if (plazos.length === 0) {
     return (
@@ -368,14 +379,16 @@ function TabPlazos({
         }}
       >
         <SubH>Plazos asociados</SubH>
-        <Btn
-          size="sm"
-          kind="primary"
-          icon={<PlusIcon size={13} strokeWidth={1.6} />}
-          onClick={() => onOpenModal("nuevo-plazo")}
-        >
-          Agregar plazo
-        </Btn>
+        {canManage && (
+          <Btn
+            size="sm"
+            kind="primary"
+            icon={<PlusIcon size={13} strokeWidth={1.6} />}
+            onClick={() => onOpenModal("nuevo-plazo")}
+          >
+            Agregar plazo
+          </Btn>
+        )}
       </div>
       {plazos.map((p, i) => (
         <div
@@ -430,11 +443,17 @@ function TabPlazos({
               <CheckIcon size={11} strokeWidth={2} />
               Cumplido
             </Pill>
-          ) : (
-            <Btn size="sm" kind="ghost" icon={<CheckIcon size={13} strokeWidth={1.8} />}>
+          ) : canManage ? (
+            <Btn
+              size="sm"
+              kind="ghost"
+              icon={<CheckIcon size={13} strokeWidth={1.8} />}
+              disabled={isMarkingPending}
+              onClick={() => p.dbId != null && onMarkCumplido(p.dbId)}
+            >
               Marcar cumplido
             </Btn>
-          )}
+          ) : null}
         </div>
       ))}
     </Card>
@@ -886,6 +905,10 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
   const { data: causaPlazos = [] } = useDeadlines(id);
   const { data: actuacionesList = [] } = useActuaciones(id);
   const { abogado: selectedAbogado } = useSelectedLawyer();
+  const { data: me } = useMe();
+  const canManage = me?.role === "auditor" || me?.role === "admin";
+  const markDeadline = useMarkDeadline();
+  const [showAgregarPlazo, setShowAgregarPlazo] = useState(false);
 
   if (!causa) {
     return <Splash inline label="Cargando causa" />;
@@ -912,6 +935,7 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
 
   const handleOpenModal = (modal: string) => {
     if (modal === "subir-documento") onSubirDoc();
+    if (modal === "nuevo-plazo") setShowAgregarPlazo(true);
   };
 
   const tabs: Array<{ id: TabId; label: string; badge?: number }> = [
@@ -1174,10 +1198,20 @@ export function CausaDetalle({ onSubirDoc = () => {} }: { onSubirDoc?: () => voi
         />
       )}
       {tab === "plazos" && (
-        <TabPlazos plazos={causaPlazos} onOpenModal={handleOpenModal} />
+        <TabPlazos
+          causaId={id}
+          plazos={causaPlazos}
+          onOpenModal={handleOpenModal}
+          canManage={canManage}
+          onMarkCumplido={(deadlineId) => markDeadline.mutate({ caseId: id, deadlineId, status: "cumplido" })}
+          isMarkingPending={markDeadline.isPending}
+        />
       )}
       {tab === "documentos" && <TabDocumentos causaId={causa.id} onOpenModal={handleOpenModal} />}
       {tab === "timeline" && <TabTimeline causaId={causa.id} />}
+      {showAgregarPlazo && (
+        <AgregarPlazoModal caseId={id} onClose={() => setShowAgregarPlazo(false)} />
+      )}
     </div>
   );
 }

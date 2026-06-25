@@ -137,16 +137,18 @@ export function docToDocumento(d: DocumentResponse): Documento {
 }
 
 export function deadlineItemToPlazo(item: DeadlineItem, caseId: number): Plazo {
+  const isCumplido = item.status === 'cumplido';
   return {
-    id: item.deadline_type,
+    id: String(item.id),
     causaId: String(caseId),
     descripcion: item.label,
     dias: Math.abs(item.dias_habiles_remaining),
     tipoDias: 'habiles',
     fechaInicio: item.triggered_at,
     fechaVencimiento: item.due_date,
-    estado: computeEstado(item.dias_habiles_remaining),
+    estado: isCumplido ? 'cumplido' : computeEstado(item.dias_habiles_remaining),
     diasRestantes: item.dias_habiles_remaining,
-    semaforo: computeSemaforo(item.dias_habiles_remaining),
+    semaforo: isCumplido ? 'verde' : computeSemaforo(item.dias_habiles_remaining),
+    dbId: item.id,
   };
 }

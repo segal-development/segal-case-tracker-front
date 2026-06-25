@@ -57,6 +57,7 @@ export interface Plazo {
   estado: PlazosEstado;
   diasRestantes: number;
   semaforo: SemaforoColor;
+  dbId?: number;
 }
 
 export interface Actuacion {
@@ -179,6 +180,8 @@ export interface DeadlineItem {
   dias_habiles_remaining: number;
   status: string;
   source_movement_id: number | null;
+  id: number;
+  is_manual?: boolean;
 }
 
 export interface ProximaAccion {

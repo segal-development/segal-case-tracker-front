@@ -48,6 +48,7 @@ function AccountRow({ acc, last }: { acc: Account; last: boolean }) {
         <label style={labelCss}>Rol</label>
         <select style={{ ...inputCss, appearance: "auto" as const }} value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="lawyer">Abogado</option>
+          <option value="auditor">Auditor</option>
           <option value="admin">Admin</option>
         </select>
       </div>

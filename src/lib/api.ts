@@ -69,6 +69,19 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const token = authToken();
+  if (!token) throw new Error("No auth token");
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 401) { handleUnauthorized(); throw new Error("401 — sesión expirada"); }
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText} — ${path}`);
+  return res.json() as Promise<T>;
+}
+
 /**
  * Fetch a protected binary resource (e.g. a PDF) WITH the auth header and return
  * a blob. `absolutePath` is a full API path (e.g. /api/v1/documents/123/download)
