@@ -8,10 +8,19 @@ import { Btn } from "@/components/primitives/Btn";
 import { Card } from "@/components/primitives/Card";
 import { Splash } from "@/components/Splash";
 import { useCausas } from "@/hooks/useCausas";
+import { useAuditedDeadlines, type AuditedDeadline } from "@/hooks/useAuditedDeadlines";
+import { useMe } from "@/hooks/useMe";
 import type { Causa } from "@/data/types";
 
 type VistaMode = "lista" | "calendario";
-type EstadoFilter = "todos" | "vencido" | "hoy" | "prox7" | "alDia";
+type EstadoFilter =
+  | "todos"
+  | "vencido"
+  | "hoy"
+  | "prox7"
+  | "alDia"
+  | "cumplido"
+  | "incumplido";
 
 interface PlazosProps {
   onNuevoPlazo?: () => void;
@@ -88,6 +97,11 @@ const ESTADO_LABEL: Record<string, string> = {
 function estadoLabel(state?: string | null): string {
   if (!state) return "Plazo en seguimiento";
   return ESTADO_LABEL[state] ?? "Plazo en seguimiento";
+}
+
+function inicialesFrom(name: string): string {
+  const parts = name.split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "SD";
 }
 
 // ---------- ViewToggle ----------
@@ -657,6 +671,153 @@ function PlazosCalendario({ causas }: { causas: Causa[] }) {
   );
 }
 
+// ---------- AuditedLista (cumplido / no_cumplido rows) ----------
+
+function StatusPill({ status }: { status: AuditedDeadline["status"] }) {
+  const isCumplido = status === "cumplido";
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: ".04em",
+        color: "#fff",
+        background: isCumplido ? "var(--fj-verde)" : "var(--fj-rojo)",
+        borderRadius: 999,
+        padding: "2px 10px",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {isCumplido ? "Cumplido" : "Incumplido"}
+    </span>
+  );
+}
+
+function AuditedLista({ rows }: { rows: AuditedDeadline[] }) {
+  const navigate = useNavigate();
+
+  if (rows.length === 0) {
+    return (
+      <Card pad={60} style={{ textAlign: "center" }}>
+        <div
+          style={{
+            fontFamily: "var(--fj-heading)",
+            fontSize: 20,
+            fontWeight: 500,
+            color: "var(--fj-ink)",
+            marginBottom: 8,
+          }}
+        >
+          Sin plazos auditados en este filtro.
+        </div>
+        <div style={{ fontFamily: "var(--fj-body)", fontSize: 14, color: "var(--fj-ink3)" }}>
+          Los plazos marcados por el auditor aparecerán aquí.
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card pad={0} style={{ overflow: "hidden" }}>
+      {rows.map((row, i) => (
+        <button
+          key={row.id}
+          onClick={() => navigate(`/causas/${row.case_id}`)}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr auto auto auto",
+            gap: 16,
+            padding: "14px 20px",
+            alignItems: "center",
+            width: "100%",
+            background: "transparent",
+            border: 0,
+            borderBottom: i === rows.length - 1 ? undefined : "1px solid var(--fj-line)",
+            textAlign: "left",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--fj-panel2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+          }}
+        >
+          {/* Col 1: label + legal_basis + rol · caratula */}
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "var(--fj-body)",
+                fontSize: 11,
+                color: "var(--fj-ink3)",
+                marginBottom: 3,
+              }}
+            >
+              {row.label}
+              {row.legal_basis ? ` · ${row.legal_basis}` : ""}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 13.5,
+                fontWeight: 500,
+                color: "var(--fj-ink)",
+              }}
+            >
+              <code
+                style={{ fontFamily: "var(--fj-mono)", fontSize: 12, color: "var(--fj-ink2)" }}
+              >
+                {row.rol}
+              </code>
+              <span style={{ color: "var(--fj-ink3)" }}>·</span>
+              <span
+                style={{
+                  maxWidth: 340,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {row.caratula}
+              </span>
+            </div>
+          </div>
+
+          {/* Col 2: due date */}
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--fj-ink3)",
+              whiteSpace: "nowrap",
+              textAlign: "right",
+            }}
+          >
+            {formatDateCL(row.due_date)}
+          </div>
+
+          {/* Col 3: status pill */}
+          <StatusPill status={row.status} />
+
+          {/* Col 4: abogado avatar */}
+          {row.abogado_nombre ? (
+            <Avatar
+              iniciales={inicialesFrom(row.abogado_nombre)}
+              color="#6366f1"
+              nombre={row.abogado_nombre}
+              size={26}
+            />
+          ) : (
+            <span style={{ width: 26 }} />
+          )}
+        </button>
+      ))}
+    </Card>
+  );
+}
+
 // ---------- Main export ----------
 
 export function Plazos({ onNuevoPlazo = () => {} }: PlazosProps) {
@@ -665,6 +826,19 @@ export function Plazos({ onNuevoPlazo = () => {} }: PlazosProps) {
   const [abg, setAbg] = useState("todos");
 
   const { data: causas = [], isLoading } = useCausas();
+  const { data: me } = useMe();
+  const { data: audited = [] } = useAuditedDeadlines();
+
+  // Audited (auditor-marked) deadlines — primarily for the auditor role, but
+  // harmless for everyone else (regular lawyers simply see their own, often 0).
+  const cumplidoList = useMemo(
+    () => audited.filter((d) => d.status === "cumplido"),
+    [audited],
+  );
+  const incumplidoList = useMemo(
+    () => audited.filter((d) => d.status === "no_cumplido"),
+    [audited],
+  );
 
   // Only causas with a tracked deadline and a non-null semaforo
   const plazoCausas = useMemo(
@@ -825,7 +999,7 @@ export function Plazos({ onNuevoPlazo = () => {} }: PlazosProps) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
+          gridTemplateColumns: "repeat(7, 1fr)",
           gap: 12,
           marginBottom: 24,
         }}
@@ -865,7 +1039,36 @@ export function Plazos({ onNuevoPlazo = () => {} }: PlazosProps) {
           onClick={() => setEstado("alDia")}
           dot="var(--fj-verde)"
         />
+        <ResumenCard
+          label="Cumplido"
+          n={cumplidoList.length}
+          active={estado === "cumplido"}
+          onClick={() => setEstado("cumplido")}
+          dot="var(--fj-verde)"
+        />
+        <ResumenCard
+          label="Incumplido"
+          n={incumplidoList.length}
+          active={estado === "incumplido"}
+          onClick={() => setEstado("incumplido")}
+          dot="var(--fj-rojo)"
+        />
       </div>
+
+      {/* Auditor note — shown for the auditor role; harmless context for others */}
+      {me?.role === "auditor" && (estado === "cumplido" || estado === "incumplido") && (
+        <p
+          style={{
+            fontSize: 12,
+            color: "var(--fj-ink3)",
+            margin: "-12px 0 16px",
+            paddingLeft: 4,
+            fontFamily: "var(--fj-body)",
+          }}
+        >
+          Plazos auditados sobre toda la cartera del estudio.
+        </p>
+      )}
 
       {/* Abogado filter row */}
       {abogados.length > 0 && (
@@ -902,7 +1105,9 @@ export function Plazos({ onNuevoPlazo = () => {} }: PlazosProps) {
       )}
 
       {/* Vista */}
-      {vista === "lista" ? (
+      {estado === "cumplido" || estado === "incumplido" ? (
+        <AuditedLista rows={estado === "cumplido" ? cumplidoList : incumplidoList} />
+      ) : vista === "lista" ? (
         <PlazosLista causas={filtered} />
       ) : (
         <PlazosCalendario causas={filtered} />
