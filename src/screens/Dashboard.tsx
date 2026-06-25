@@ -387,6 +387,12 @@ export function Dashboard() {
   const todayLabel = fmtDashboardDate(new Date());
 
   const rojoCount = useMemo(() => causas.filter((c) => c.semaforo === "rojo").length, [causas]);
+  // "Causas activas" counts only classified (with a semáforo) cases — excludes the
+  // grey (indeterminate/terminada) and the no-detail ones, which aren't "en seguimiento".
+  const clasificadas = useMemo(
+    () => causas.filter((c) => c.semaforo === "rojo" || c.semaforo === "amarillo" || c.semaforo === "verde").length,
+    [causas],
+  );
 
   const proximosPlazos = useMemo(
     () =>
@@ -466,7 +472,7 @@ export function Dashboard() {
       </div>
 
       {/* KPI row */}
-      <KPIRow causasCount={causas.length} urgentes={urgentes} rojoCount={rojoCount} isLoading={isLoading} />
+      <KPIRow causasCount={clasificadas} urgentes={urgentes} rojoCount={rojoCount} isLoading={isLoading} />
 
       {/* Default layout */}
       <DashboardDefault
