@@ -3,6 +3,7 @@ import type { Abogado, Causa } from "@/data/types";
 import { apiGet } from "@/lib/api";
 import { caseToCausa, type CaseResponse } from "@/lib/adapters";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
+import { useMe } from "@/hooks/useMe";
 
 interface CasesPage {
   items: CaseResponse[];
@@ -17,9 +18,13 @@ const MAX_PAGES = 60;
 
 export function useCausas() {
   const { abogado } = useSelectedLawyer();
+  const { data: me } = useMe();
+  const isAuditor = me?.role === "auditor";
   const rut = abogado?.rut ?? null;
 
-  const derivedAbogado: Abogado | undefined = abogado
+  // The auditor is transversal: show EVERY study case with its REAL lawyer, and
+  // do NOT filter by the selected-lawyer stub (it would match no cases).
+  const derivedAbogado: Abogado | undefined = (abogado && !isAuditor)
     ? {
         id: abogado.rut,
         nombre: abogado.nombre,
@@ -31,19 +36,20 @@ export function useCausas() {
       }
     : undefined;
 
+  const fetchPage = (page: number) =>
+    apiGet<CasesPage>("/cases", {
+      per_page: 100,
+      sort_by: "criticidad",
+      page,
+      // auditor: no abogado_rut → all study cases (backend already scopes to the firm)
+      ...(!isAuditor && rut ? { abogado_rut: rut } : {}),
+    });
+
   return useQuery<Causa[]>({
-    queryKey: ["causas", rut],
-    enabled: rut !== null,
+    queryKey: ["causas", isAuditor ? "_auditor_all" : rut],
+    enabled: isAuditor ? !!me : rut !== null,
     queryFn: async () => {
-      if (!rut) return [];
-
-      const first = await apiGet<CasesPage>("/cases", {
-        per_page: 100,
-        sort_by: "criticidad",
-        page: 1,
-        abogado_rut: rut,
-      });
-
+      const first = await fetchPage(1);
       const totalPages = Math.min(first.pages, MAX_PAGES);
 
       if (totalPages <= 1) {
@@ -51,20 +57,10 @@ export function useCausas() {
       }
 
       const rest = await Promise.all(
-        Array.from({ length: totalPages - 1 }, (_, i) =>
-          apiGet<CasesPage>("/cases", {
-            per_page: 100,
-            sort_by: "criticidad",
-            page: i + 2,
-            abogado_rut: rut,
-          }),
-        ),
+        Array.from({ length: totalPages - 1 }, (_, i) => fetchPage(i + 2)),
       );
 
-      const allItems = [
-        ...first.items,
-        ...rest.flatMap((p) => p.items),
-      ];
+      const allItems = [...first.items, ...rest.flatMap((p) => p.items)];
 
       // Paginating by a non-unique sort (criticidad) can return the same case on
       // more than one page → dedupe by id to avoid duplicate React keys, doubled
