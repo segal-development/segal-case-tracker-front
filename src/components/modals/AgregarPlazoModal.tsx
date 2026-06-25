@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useDeadlineCatalog } from "@/hooks/useDeadlineCatalog";
 import { useAddDeadline } from "@/hooks/useAddDeadline";
+import { useComputeDue } from "@/hooks/useComputeDue";
 
 const modalInput: CSSProperties = {
   height: 40,
@@ -49,14 +50,18 @@ export function AgregarPlazoModal({ caseId, onClose }: Props) {
   const { data: catalog = [], isLoading: loadingCatalog } = useDeadlineCatalog();
   const addDeadline = useAddDeadline();
   const [deadlineType, setDeadlineType] = useState("");
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  // Date the deadline starts running (default today). due_date is derived by the
+  // backend = start + N días hábiles; we preview it via useComputeDue.
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const startStr = format(startDate, "yyyy-MM-dd");
+  const { data: preview } = useComputeDue(deadlineType, startStr);
 
-  const canSubmit = deadlineType !== "" && dueDate !== undefined && !addDeadline.isPending;
+  const canSubmit = deadlineType !== "" && !addDeadline.isPending;
 
   const handleCreate = () => {
-    if (!canSubmit || !dueDate) return;
+    if (!canSubmit) return;
     addDeadline.mutate(
-      { caseId, deadline_type: deadlineType, due_date: format(dueDate, "yyyy-MM-dd") },
+      { caseId, deadline_type: deadlineType, start_date: startStr },
       { onSuccess: onClose },
     );
   };
@@ -98,20 +103,38 @@ export function AgregarPlazoModal({ caseId, onClose }: Props) {
           )}
         </div>
         <div>
-          <label style={modalLabel}>Fecha de vencimiento</label>
+          <label style={modalLabel}>Fecha de inicio (desde cuándo corre el plazo)</label>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full justify-start font-normal">
                 <CalendarIcon className="mr-2 size-4 opacity-60" />
-                {dueDate
-                  ? format(dueDate, "dd/MM/yyyy")
-                  : <span className="text-muted-foreground">Elegir fecha</span>}
+                {format(startDate, "dd/MM/yyyy")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="z-[200] w-auto p-0" align="start">
-              <Calendar mode="single" selected={dueDate} onSelect={setDueDate} locale={es} autoFocus />
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={(d) => d && setStartDate(d)}
+                locale={es}
+                autoFocus
+              />
             </PopoverContent>
           </Popover>
+          {preview && (
+            <div style={{
+              marginTop: 8, fontFamily: "var(--fj-body)", fontSize: 13, color: "var(--fj-ink2)",
+              padding: "8px 12px", borderRadius: 8, background: "var(--fj-panel2)",
+            }}>
+              Vence el{" "}
+              <strong style={{ color: "var(--fj-ink)" }}>
+                {format(new Date(`${preview.due_date}T00:00:00`), "dd/MM/yyyy")}
+              </strong>{" "}
+              <span style={{ color: "var(--fj-ink3)" }}>
+                ({preview.dias_habiles} días hábiles{preview.is_fatal ? " · fatal" : ""})
+              </span>
+            </div>
+          )}
         </div>
         {addDeadline.isError && (
           <div style={{
