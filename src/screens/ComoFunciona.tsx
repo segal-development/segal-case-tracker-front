@@ -252,6 +252,9 @@ export function ComoFunciona() {
                 Un mini-computador siempre encendido en la oficina. Es lo más simple, probado y
                 económico — sin costos mensuales de terceros. Así está funcionando ahora.
               </div>
+              <div style={{ marginTop: 10, fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 15, color: "var(--fj-verde)" }}>
+                ~US$500–700 (una vez) · sin costo mensual
+              </div>
             </Card>
             <Card style={{ borderTop: "3px solid var(--fj-primary)" }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".05em", color: "var(--fj-primary)", marginBottom: 8 }}>PLAN B — SIN HARDWARE</div>
@@ -261,6 +264,12 @@ export function ComoFunciona() {
                 servidor en la nube que sale a internet a través de una conexión residencial
                 contratada. No requiere ningún equipo en la oficina; tiene un costo mensual
                 por ese servicio y una validación técnica previa.
+              </div>
+              <div style={{ marginTop: 10, fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 15, color: "var(--fj-primary)" }}>
+                ~US$45–80/mes
+              </div>
+              <div style={{ marginTop: 2, fontSize: 12, color: "var(--fj-ink3)" }}>
+                (medimos el tráfico real: es bajo — el costo lo domina el servidor, no el proxy)
               </div>
             </Card>
             <Card style={{ borderTop: "3px solid var(--fj-amarillo)" }}>
@@ -324,6 +333,51 @@ export function ComoFunciona() {
             frágil (un gato y ratón constante). El nuestro, al apoyarse en accesos legítimos, es más
             simple, más barato y más estable — y puede crecer a la nube el día que se necesite.
           </p>
+        </div>
+      </div>
+
+      {/* Investigación + marco legal */}
+      <div style={{ padding: "56px 0" }}>
+        <div style={section}>
+          <div style={kicker}>Lo que confirmamos</div>
+          <h2 style={h2}>No hay atajos — y por qué nuestro enfoque es el más sólido</h2>
+          <p style={{ ...lead, maxWidth: 760, marginBottom: 24 }}>
+            Investigamos a fondo si existía una vía más simple (una API oficial, un servicio).
+            La conclusión es contundente y juega a nuestro favor:
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+            <Card style={{ borderTop: "3px solid var(--fj-ink3)" }}>
+              <div style={{ fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 16, marginBottom: 8 }}>
+                🔍 No existe una API oficial de causas
+              </div>
+              <div style={{ fontSize: 13.5, color: "var(--fj-ink2)", lineHeight: 1.55 }}>
+                El Poder Judicial no ofrece una forma oficial de descargar las causas en masa.
+                <strong> Toda la industria que vende estos datos lo hace por scraping</strong> — igual
+                que nosotros. No hay una solución "mágica" que estemos perdiendo.
+              </div>
+            </Card>
+            <Card style={{ borderTop: "3px solid var(--fj-amarillo)" }}>
+              <div style={{ fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 16, marginBottom: 8 }}>
+                ⚖️ El marco legal favorece nuestro enfoque
+              </div>
+              <div style={{ fontSize: 13.5, color: "var(--fj-ink2)", lineHeight: 1.55 }}>
+                La ley restringe el <em>tratamiento masivo</em> de datos del sistema judicial sin
+                autorización. Nosotros accedemos a <strong>nuestras propias causas con credenciales
+                legítimas</strong> (Clave Única, como parte del juicio) — la posición más defendible,
+                a diferencia de quien extrae datos de terceros.
+              </div>
+            </Card>
+            <Card style={{ borderTop: "3px solid var(--fj-verde)" }}>
+              <div style={{ fontFamily: "var(--fj-heading)", fontWeight: 600, fontSize: 16, marginBottom: 8 }}>
+                ✓ Más sostenible que la industria
+              </div>
+              <div style={{ fontSize: 13.5, color: "var(--fj-ink2)", lineHeight: 1.55 }}>
+                Al apoyarnos en accesos legítimos y no en "trucos" para colarse, hay mucho menos que
+                se rompa cuando el sitio cambia. Más simple, más estable y más barato — y puede crecer
+                a la nube el día que se necesite.
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
 
