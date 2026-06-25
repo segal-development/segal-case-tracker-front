@@ -22,7 +22,12 @@ interface NavItem {
   badgeTone?: "rojo" | "neutral";
 }
 
-function getNavItems(role: Role, novedadesCount: number, isAuditor: boolean): NavItem[] {
+function getNavItems(
+  role: Role,
+  novedadesCount: number,
+  isAuditor: boolean,
+  canSeePlazos: boolean,
+): NavItem[] {
   const causasBadge = CAUSAS.length;
   const plazosBadge = RESUMEN_PLAZOS.proximos + RESUMEN_PLAZOS.vencidos;
 
@@ -59,12 +64,14 @@ function getNavItems(role: Role, novedadesCount: number, isAuditor: boolean): Na
     ];
   }
 
-  // abogado (default)
+  // abogado (default) — Plazos is only for admin/auditor, not lawyers
   return [
     { path: "/",              label: "Dashboard",     icon: <Home size={17} strokeWidth={1.6} /> },
     { path: "/novedades",     label: "Novedades",     icon: <Bell size={17} strokeWidth={1.6} />, badge: novedadesCount },
     { path: "/causas",        label: "Causas",        icon: <Briefcase size={17} strokeWidth={1.6} />, badge: causasBadge },
-    { path: "/plazos",        label: "Plazos",        icon: <Clock size={17} strokeWidth={1.6} />, badge: plazosBadge, badgeTone: "rojo" },
+    ...(canSeePlazos
+      ? [{ path: "/plazos", label: "Plazos", icon: <Clock size={17} strokeWidth={1.6} />, badge: plazosBadge, badgeTone: "rojo" as const }]
+      : []),
     { path: "/productividad", label: "Productividad", icon: <TrendingUp size={17} strokeWidth={1.6} /> },
   ];
 }
@@ -84,11 +91,13 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const { role } = useRole();
   const { data: me } = useMe();
   const isAuditor = me?.role === "auditor";
+  // Plazos is restricted to admin/auditor (and supervisor's exec view) — not lawyers.
+  const canSeePlazos = me?.role === "admin" || me?.role === "auditor";
   const { data: lastSync } = useLastSync();
   const location = useLocation();
   const navigate = useNavigate();
   const { count: novedadesCount } = useNovedades();
-  const items = getNavItems(role, novedadesCount, isAuditor);
+  const items = getNavItems(role, novedadesCount, isAuditor, canSeePlazos);
 
   const activePath = location.pathname;
 

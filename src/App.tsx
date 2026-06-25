@@ -109,7 +109,16 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="causas" element={<CausasRoute />} />
               <Route path="causas/:id" element={<CausaDetalleRoute />} />
-              <Route path="plazos" element={<PlazosRoute />} />
+              <Route
+                path="plazos"
+                element={
+                  authed && meLoading
+                    ? <Splash />
+                    : (me?.role === "admin" || me?.role === "auditor")
+                      ? <PlazosRoute />
+                      : <Navigate to="/" replace />
+                }
+              />
               <Route path="productividad" element={<Productividad />} />
               <Route path="supervisor" element={<Supervisor />} />
               <Route path="admin" element={<Admin />} />
