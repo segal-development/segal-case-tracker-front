@@ -9,10 +9,11 @@ export interface Me {
 }
 
 /** Current authenticated user (incl. role) — drives admin-only UI gating. */
-export function useMe() {
+export function useMe(opts?: { enabled?: boolean }) {
   return useQuery<Me>({
     queryKey: ["me"],
     queryFn: () => apiGet<Me>("/auth/me"),
     staleTime: 5 * 60 * 1000,
+    enabled: opts?.enabled ?? true,
   });
 }

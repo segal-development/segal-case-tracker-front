@@ -1,4 +1,4 @@
-import { Suspense, useState, lazy } from "react";
+import { Suspense, useState, useEffect, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Splash } from "@/components/Splash";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -19,10 +19,18 @@ const ComoFunciona = lazy(() => import("@/screens/ComoFunciona").then((m) => ({ 
 import { NuevaCausaModal, SubirDocumentoModal, NuevoPlazoModal } from "@/components/modals";
 import { SelectLawyer } from "@/screens/SelectLawyer";
 import { useSelectedLawyer } from "@/lawyer/LawyerProvider";
+import { useMe } from "@/hooks/useMe";
 
-function RequireAuth({ authed, hasAbogado }: { authed: boolean; hasAbogado: boolean }) {
+function RequireAuth({
+  authed, hasAbogado, isAuditor, meLoading,
+}: {
+  authed: boolean; hasAbogado: boolean; isAuditor: boolean; meLoading: boolean;
+}) {
   if (!authed) return <Navigate to="/login" replace />;
-  if (!hasAbogado) return <Navigate to="/select-lawyer" replace />;
+  // Wait for the role before deciding (avoids a flash to /select-lawyer for auditors).
+  if (meLoading) return <Splash />;
+  // The auditor is transversal: it never picks a lawyer (sees the whole study).
+  if (!hasAbogado && !isAuditor) return <Navigate to="/select-lawyer" replace />;
   return <Outlet />;
 }
 
@@ -58,7 +66,17 @@ function PlazosRoute() {
 
 export default function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem("sd_authed") === "1");
-  const { abogado } = useSelectedLawyer();
+  const { abogado, setAbogado } = useSelectedLawyer();
+  const { data: me, isLoading: meLoading } = useMe({ enabled: authed });
+  const isAuditor = me?.role === "auditor";
+
+  // The auditor never picks a lawyer — auto-select a stub (its own rut) so the
+  // case fetch activates; the backend scopes the auditor to the whole study.
+  useEffect(() => {
+    if (authed && isAuditor && !abogado && me) {
+      setAbogado({ rut: me.rut, nombre: me.name, case_count: 0 });
+    }
+  }, [authed, isAuditor, abogado, me, setAbogado]);
 
   const login = () => {
     localStorage.setItem("sd_authed", "1");
@@ -80,13 +98,13 @@ export default function App() {
             element={
               !authed
                 ? <Navigate to="/login" replace />
-                : abogado
+                : (abogado || isAuditor)
                   ? <Navigate to="/" replace />
                   : <SelectLawyer />
             }
           />
 
-          <Route element={<RequireAuth authed={authed} hasAbogado={!!abogado} />}>
+          <Route element={<RequireAuth authed={authed} hasAbogado={!!abogado} isAuditor={!!isAuditor} meLoading={authed && meLoading} />}>
             <Route element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="causas" element={<CausasRoute />} />
